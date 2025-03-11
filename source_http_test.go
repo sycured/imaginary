@@ -31,6 +31,8 @@ const ExpectedAllowedOrigins = "Expected '%s' to be allowed with origins: %+v"
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
 const HttpBarCom = "http://bar.com"
+const HttpFooBarUrl = "http://foo/bar?url="
+const HttpFooBarUrlBarCom = HttpFooBarUrl + HttpBarCom
 const XCustom = "X-Custom"
 const XToken = "X-Token"
 
@@ -57,7 +59,7 @@ func TestHttpImageSource(t *testing.T) {
 		_, _ = w.Write(body)
 	}
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+ts.URL, nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+ts.URL, nil)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
@@ -93,7 +95,7 @@ func TestHttpImageSourceAllowedOrigin(t *testing.T) {
 		}
 	}
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+ts.URL, nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+ts.URL, nil)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 }
@@ -118,7 +120,7 @@ func TestHttpImageSourceNotAllowedOrigin(t *testing.T) {
 		}
 	}
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url=http://bar.com", nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrlBarCom, nil)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 }
@@ -130,7 +132,7 @@ func TestHttpImageSourceForwardAuthHeader(t *testing.T) {
 	}
 
 	for _, header := range cases {
-		r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url=http://bar.com", nil)
+		r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrlBarCom, nil)
 		r.Header.Set(header, "foobar")
 
 		source := &HTTPImageSource{&SourceConfig{AuthForwarding: true}}
@@ -154,7 +156,7 @@ func TestHttpImageSourceForwardHeaders(t *testing.T) {
 	}
 
 	for _, header := range cases {
-		r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url=http://bar.com", nil)
+		r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrlBarCom, nil)
 		r.Header.Set(header, "foobar")
 
 		source := &HTTPImageSource{&SourceConfig{ForwardHeaders: cases}}
@@ -179,7 +181,7 @@ func TestHttpImageSourceNotForwardHeaders(t *testing.T) {
 
 	testURL := createURL(HttpBarCom, t)
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+testURL.String(), nil)
 	r.Header.Set("Not-Forward", "foobar")
 
 	source := &HTTPImageSource{&SourceConfig{ForwardHeaders: cases}}
@@ -202,7 +204,7 @@ func TestHttpImageSourceForwardedHeadersNotOverride(t *testing.T) {
 
 	testURL := createURL(HttpBarCom, t)
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+testURL.String(), nil)
 	r.Header.Set("Authorization", "foobar")
 
 	source := &HTTPImageSource{&SourceConfig{Authorization: "ValidAPIKey", ForwardHeaders: cases}}
@@ -225,7 +227,7 @@ func TestHttpImageSourceCaseSensitivityInForwardedHeaders(t *testing.T) {
 
 	testURL := createURL(HttpBarCom, t)
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+testURL.String(), nil)
 	r.Header.Set(XCustom, "foobar")
 
 	source := &HTTPImageSource{&SourceConfig{ForwardHeaders: cases}}
@@ -245,7 +247,7 @@ func TestHttpImageSourceEmptyForwardedHeaders(t *testing.T) {
 
 	testURL := createURL(HttpBarCom, t)
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+testURL.String(), nil)
 
 	source := &HTTPImageSource{&SourceConfig{ForwardHeaders: cases}}
 	if !source.Matches(r) {
@@ -285,7 +287,7 @@ func TestHttpImageSourceError(t *testing.T) {
 		}
 	}
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+ts.URL, nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+ts.URL, nil)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 }
@@ -315,154 +317,138 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 		_, _ = w.Write(body)
 	}
 
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+ts.URL, nil)
+	r, _ := http.NewRequest(http.MethodGet, HttpFooBarUrl+ts.URL, nil)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 }
 
 func TestShouldRestrictOrigin(t *testing.T) {
-	plainOrigins := parseOrigins(
-		"https://example.org",
-	)
+	// Prepare the various origins
+	plainOrigins := parseOrigins("https://example.org")
+	wildCardOrigins := parseOrigins("https://localhost,https://*.example.org,https://some.s3.bucket.on.aws.org,https://*.s3.bucket.on.aws.org")
+	withPathOrigins := parseOrigins("https://localhost/foo/bar/,https://*.example.org/foo/,https://some.s3.bucket.on.aws.org/my/bucket/,https://*.s3.bucket.on.aws.org/my/bucket/,https://no-leading-path-slash.example.org/assets")
+	with2Buckets := parseOrigins("https://some.s3.bucket.on.aws.org/my/bucket1/,https://some.s3.bucket.on.aws.org/my/bucket2/")
+	pathWildCard := parseOrigins("https://some.s3.bucket.on.aws.org/my-bucket-name*")
 
-	wildCardOrigins := parseOrigins(
-		"https://localhost,https://*.example.org,https://some.s3.bucket.on.aws.org,https://*.s3.bucket.on.aws.org",
-	)
+	// Define a table of test cases.
+	tests := []struct {
+		name               string
+		urlStr             string
+		origins            []*url.URL
+		restrictedExpected bool // true means origin should be restricted
+	}{
+		{
+			name:               "Plain origin",
+			urlStr:             "https://example.org/logo.jpg",
+			origins:            plainOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin, plain URL",
+			urlStr:             "https://example.org/logo.jpg",
+			origins:            wildCardOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin, sub domain URL",
+			urlStr:             "https://node-42.example.org/logo.jpg",
+			origins:            wildCardOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin, sub-sub domain URL",
+			urlStr:             "https://n.s3.bucket.on.aws.org/our/bucket/logo.jpg",
+			origins:            wildCardOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Incorrect domain URL (plain origins)",
+			urlStr:             "https://myexample.org/logo.jpg",
+			origins:            plainOrigins,
+			restrictedExpected: true,
+		},
+		{
+			name:               "Incorrect domain URL (wildcard origins)",
+			urlStr:             "https://myexample.org/logo.jpg",
+			origins:            wildCardOrigins,
+			restrictedExpected: true,
+		},
+		{
+			name:               "Loopback origin with path, correct URL",
+			urlStr:             "https://localhost/foo/bar/logo.png",
+			origins:            withPathOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin with path, correct URL",
+			urlStr:             "https://our.company.s3.bucket.on.aws.org/my/bucket/logo.gif",
+			origins:            withPathOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin with partial path, correct URL",
+			urlStr:             "https://our.company.s3.bucket.on.aws.org/my/bucket/a/b/c/d/e/logo.gif",
+			origins:            withPathOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin with partial path, correct URL double slashes",
+			urlStr:             "https://static.example.org/foo//a//b//c/d/e/logo.webp",
+			origins:            withPathOrigins,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Wildcard origin with path missing trailing slash",
+			urlStr:             "https://no-leading-path-slash.example.org/assets/logo.webp",
+			origins:            parseOrigins("https://*.example.org/assets"),
+			restrictedExpected: false,
+		},
+		{
+			name:               "Loopback origin with path, incorrect URL",
+			urlStr:             "https://localhost/wrong/logo.png",
+			origins:            withPathOrigins,
+			restrictedExpected: true,
+		},
+		{
+			name:               "2 buckets, bucket1",
+			urlStr:             "https://some.s3.bucket.on.aws.org/my/bucket1/logo.jpg",
+			origins:            with2Buckets,
+			restrictedExpected: false,
+		},
+		{
+			name:               "2 buckets, bucket2",
+			urlStr:             "https://some.s3.bucket.on.aws.org/my/bucket2/logo.jpg",
+			origins:            with2Buckets,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Path wildcard, allowed",
+			urlStr:             "https://some.s3.bucket.on.aws.org/my-bucket-name/logo.jpg",
+			origins:            pathWildCard,
+			restrictedExpected: false,
+		},
+		{
+			name:               "Path wildcard, restricted",
+			urlStr:             "https://some.s3.bucket.on.aws.org/my-other-bucket-name/logo.jpg",
+			origins:            pathWildCard,
+			restrictedExpected: true,
+		},
+	}
 
-	withPathOrigins := parseOrigins(
-		"https://localhost/foo/bar/,https://*.example.org/foo/,https://some.s3.bucket.on.aws.org/my/bucket/," +
-			"https://*.s3.bucket.on.aws.org/my/bucket/,https://no-leading-path-slash.example.org/assets",
-	)
-
-	with2Buckets := parseOrigins(
-		"https://some.s3.bucket.on.aws.org/my/bucket1/,https://some.s3.bucket.on.aws.org/my/bucket2/",
-	)
-
-	pathWildCard := parseOrigins(
-		"https://some.s3.bucket.on.aws.org/my-bucket-name*",
-	)
-
-	t.Run("Plain origin", func(t *testing.T) {
-		testURL := createURL("https://example.org/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, plainOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, plainOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin, plain URL", func(t *testing.T) {
-		testURL := createURL("https://example.org/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, wildCardOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, wildCardOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin, sub domain URL", func(t *testing.T) {
-		testURL := createURL("https://node-42.example.org/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, wildCardOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, wildCardOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin, sub-sub domain URL", func(t *testing.T) {
-		testURL := createURL("https://n.s3.bucket.on.aws.org/our/bucket/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, wildCardOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, wildCardOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin, incorrect domain URL", func(t *testing.T) {
-		testURL := createURL("https://myexample.org/logo.jpg", t)
-
-		if !shouldRestrictOrigin(testURL, plainOrigins) {
-			t.Errorf("Expected '%s' to not be allowed with plain origins: %+v", testURL, plainOrigins)
-		}
-
-		if !shouldRestrictOrigin(testURL, wildCardOrigins) {
-			t.Errorf("Expected '%s' to not be allowed with wildcard origins: %+v", testURL, wildCardOrigins)
-		}
-	})
-
-	t.Run("Loopback origin with path, correct URL", func(t *testing.T) {
-		testURL := createURL("https://localhost/foo/bar/logo.png", t)
-
-		if shouldRestrictOrigin(testURL, withPathOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin with path, correct URL", func(t *testing.T) {
-		testURL := createURL("https://our.company.s3.bucket.on.aws.org/my/bucket/logo.gif", t)
-
-		if shouldRestrictOrigin(testURL, withPathOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin with partial path, correct URL", func(t *testing.T) {
-		testURL := createURL("https://our.company.s3.bucket.on.aws.org/my/bucket/a/b/c/d/e/logo.gif", t)
-
-		if shouldRestrictOrigin(testURL, withPathOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin with partial path, correct URL double slashes", func(t *testing.T) {
-		testURL := createURL("https://static.example.org/foo//a//b//c/d/e/logo.webp", t)
-
-		if shouldRestrictOrigin(testURL, withPathOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("Wildcard origin with path missing trailing slash, correct URL", func(t *testing.T) {
-		testURL := createURL("https://no-leading-path-slash.example.org/assets/logo.webp", t)
-
-		if shouldRestrictOrigin(testURL, parseOrigins("https://*.example.org/assets")) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("Loopback origin with path, incorrect URL", func(t *testing.T) {
-		testURL := createURL("https://localhost/wrong/logo.png", t)
-
-		if !shouldRestrictOrigin(testURL, withPathOrigins) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, withPathOrigins)
-		}
-	})
-
-	t.Run("2 buckets, bucket1", func(t *testing.T) {
-		testURL := createURL("https://some.s3.bucket.on.aws.org/my/bucket1/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, with2Buckets) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, with2Buckets)
-		}
-	})
-
-	t.Run("2 buckets, bucket2", func(t *testing.T) {
-		testURL := createURL("https://some.s3.bucket.on.aws.org/my/bucket2/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, with2Buckets) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, with2Buckets)
-		}
-	})
-
-	t.Run("Path wildcard", func(t *testing.T) {
-		testURL := createURL("https://some.s3.bucket.on.aws.org/my-bucket-name/logo.jpg", t)
-		testURLFail := createURL("https://some.s3.bucket.on.aws.org/my-other-bucket-name/logo.jpg", t)
-
-		if shouldRestrictOrigin(testURL, pathWildCard) {
-			t.Errorf(ExpectedAllowedOrigins, testURL, pathWildCard)
-		}
-
-		if !shouldRestrictOrigin(testURLFail, pathWildCard) {
-			t.Errorf("Expected '%s' to be restricted with origins: %+v", testURLFail, pathWildCard)
-		}
-	})
-
+	// Iterate over the test cases.
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testURL := createURL(tc.urlStr, t)
+			actual := shouldRestrictOrigin(testURL, tc.origins)
+			if actual != tc.restrictedExpected {
+				if tc.restrictedExpected {
+					t.Errorf("Expected '%s' to be restricted with origins: %+v", testURL, tc.origins)
+				} else {
+					t.Errorf(ExpectedAllowedOrigins, testURL, tc.origins)
+				}
+			}
+		})
+	}
 }
 
 func TestParseOrigins(t *testing.T) {
