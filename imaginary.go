@@ -19,11 +19,9 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"net/url"
 	"os"
 	"runtime"
@@ -34,7 +32,6 @@ import (
 
 	"github.com/bytedance/gopkg/util/gctuner"
 	"github.com/h2non/bimg"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -416,68 +413,4 @@ func debug(msg string, values ...interface{}) {
 	if debug == "imaginary" || debug == "*" {
 		log.Printf(msg, values...)
 	}
-}
-
-// getMemoryLimit first tries to obtain the cgroup memory limit.
-// If not available or not reasonable, it falls back to using the host's memory.
-func getMemoryLimit() int64 {
-	const cgroupMemoryFile = "/sys/fs/cgroup/memory/memory.limit_in_bytes"
-	if data, err := os.ReadFile(cgroupMemoryFile); err == nil {
-		s := strings.TrimSpace(string(data))
-		if limit, err := strconv.ParseInt(s, 10, 64); err == nil && limit > 0 && limit < (1<<60) {
-			return limit
-		}
-	}
-	return getHostMemory()
-}
-
-// getHostMemory returns the total physical memory of the host.
-// On Linux it reads /proc/meminfo, on Darwin it uses sysctl.
-func getHostMemory() int64 {
-	switch runtime.GOOS {
-	case "linux":
-		return getLinuxHostMemory()
-	case "darwin":
-		return getDarwinHostMemory()
-	default:
-		return 0
-	}
-}
-
-func getDarwinHostMemory() int64 {
-	mem, err := unix.SysctlUint64("hw.memsize")
-	if err != nil {
-		return 0
-	}
-	// Ensure the uint64 fits into int64 to avoid overflow.
-	if mem > math.MaxInt64 {
-		return math.MaxInt64
-	}
-	return int64(mem)
-}
-
-// getLinuxHostMemory reads /proc/meminfo and returns the MemTotal value in bytes.
-func getLinuxHostMemory() int64 {
-	file, err := os.Open("/proc/meminfo")
-	if err != nil {
-		return 0
-	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "MemTotal:") {
-			fields := strings.Fields(line)
-			if len(fields) >= 2 {
-				// The value is provided in kilobytes.
-				if memKB, err := strconv.ParseInt(fields[1], 10, 64); err == nil {
-					return memKB * 1024
-				}
-			}
-		}
-	}
-	return 0
 }

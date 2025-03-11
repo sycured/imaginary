@@ -7,11 +7,12 @@ ARG GOLANGCILINT_VERSION=1.64.6
 # Installs libvips + required libraries
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
+  apt-get dist-upgrade -y && \
   apt-get install --no-install-recommends -y \
     automake build-essential ca-certificates curl libfftw3-dev gobject-introspection gtk-doc-tools \
     libcfitsio-dev libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev \
     libjpeg62-turbo-dev libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev \
-    libpng-dev libpoppler-glib-dev librsvg2-dev libtiff5-dev libvips-dev libwebp-dev libxml2-dev swig
+    libpng-dev libpoppler-glib-dev librsvg2-dev libtiff-dev libvips-dev libwebp-dev libxml2-dev swig
 
 # Installing golangci-lint
 WORKDIR /tmp
@@ -62,10 +63,11 @@ COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 # Install runtime dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
+  apt-get dist-upgrade -y && \
   apt-get install --no-install-recommends -y \
-   libfftw3 libcfitsio9 libexif12 libgif7 libglib2.0-0 libgsf-1-114 libheif1 libimagequant0 libjemalloc2 libjpeg62-turbo \
-   libmagickwand-6.q16-6 libmatio11 libopenexr25 libopenslide0 liborc-0.4-0 libpango1.0-0 libpng16-16 libpoppler-glib8 \
-   librsvg2-2 libtiff5 libvisp42 libwebp6 libwebpdemux2 libwebpmux3 libxml2 procps && \
+   libfftw3-bin libcfitsio10 libexif12 libgif7 libglib2.0-0 libgsf-1-114 libheif1 libimagequant0 libjemalloc2 libjpeg62-turbo \
+   libmagickwand-6.q16-6 libmatio11 libopenexr-3-1-30 libopenslide0 liborc-0.4-0 libpango1.0-0 libpng16-16 libpoppler-glib8 \
+   librsvg2-2 libtiff6 libvips42 libwebp7 libwebpdemux2 libwebpmux3 libxml2 procps && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   apt-get autoremove -y && \
   apt-get autoclean && \
@@ -74,7 +76,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
 # Server port to listen
-ENV PORT 9000
+ENV PORT=9000
 
 # Drop privileges for non-UID mapped environments
 USER nobody
