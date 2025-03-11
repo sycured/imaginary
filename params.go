@@ -453,12 +453,12 @@ func parseColorspace(val string) bimg.Interpretation {
 }
 
 func parseColor(val string) []uint8 {
-	const max float64 = 255
+	const maxValue float64 = 255
 	var buf []uint8
 	if val != "" {
 		for _, num := range strings.Split(val, ",") {
 			n, _ := strconv.ParseUint(strings.Trim(num, " "), 10, 8)
-			buf = append(buf, uint8(math.Min(float64(n), max)))
+			buf = append(buf, uint8(math.Min(float64(n), maxValue)))
 		}
 	}
 	return buf
