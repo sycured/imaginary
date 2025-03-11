@@ -26,6 +26,9 @@ import (
 	"github.com/h2non/bimg"
 )
 
+const DidNotExpectError = "Did not expect error %s\n%+v"
+const ExpectedError = "Expected an error to be thrown\nExpected: %s\nReceived: %s"
+const ExpectedProperCoercion = "Expected proper coercion %s\n%+v\n%+v"
 const epsilon = 0.0001
 
 func TestReadParams(t *testing.T) {
@@ -222,24 +225,31 @@ func TestReadMapParams(t *testing.T) {
 			t.Errorf("Error reading parameters %s", err)
 			t.FailNow()
 		}
-		if opts.Width != test.expected.Width {
-			t.Errorf("Invalid width: %d != %d", opts.Width, test.expected.Width)
-		}
-		if opts.Opacity != test.expected.Opacity {
-			t.Errorf("Invalid opacity: %#v != %#v", opts.Opacity, test.expected.Opacity)
-		}
-		if opts.Type != test.expected.Type {
-			t.Errorf("Invalid type: %s != %s", opts.Type, test.expected.Type)
-		}
-		if opts.Embed != test.expected.Embed {
-			t.Errorf("Invalid embed: %#v != %#v", opts.Embed, test.expected.Embed)
-		}
-		if opts.Gravity != test.expected.Gravity {
-			t.Errorf("Invalid gravity: %#v != %#v", opts.Gravity, test.expected.Gravity)
-		}
-		if opts.Color[0] != test.expected.Color[0] || opts.Color[1] != test.expected.Color[1] || opts.Color[2] != test.expected.Color[2] {
-			t.Errorf("Invalid color: %#v != %#v", opts.Color, test.expected.Color)
-		}
+		validateImageOptions(t, opts, test.expected)
+	}
+}
+
+func validateImageOptions(t *testing.T, opts, expected ImageOptions) {
+	if opts.Width != expected.Width {
+		t.Errorf("Invalid width: %d != %d", opts.Width, expected.Width)
+	}
+	if opts.Opacity != expected.Opacity {
+		t.Errorf("Invalid opacity: %v != %v", opts.Opacity, expected.Opacity)
+	}
+	if opts.Type != expected.Type {
+		t.Errorf("Invalid type: %s != %s", opts.Type, expected.Type)
+	}
+	if opts.Embed != expected.Embed {
+		t.Errorf("Invalid embed: %v != %v", opts.Embed, expected.Embed)
+	}
+	if opts.Gravity != expected.Gravity {
+		t.Errorf("Invalid gravity: %v != %v", opts.Gravity, expected.Gravity)
+	}
+	if len(opts.Color) < 3 || len(expected.Color) < 3 ||
+		opts.Color[0] != expected.Color[0] ||
+		opts.Color[1] != expected.Color[1] ||
+		opts.Color[2] != expected.Color[2] {
+		t.Errorf("Invalid color: %v != %v", opts.Color, expected.Color)
 	}
 }
 
@@ -298,128 +308,63 @@ func TestBuildParamsFromOperation(t *testing.T) {
 	}
 }
 
+// testCase is a generic type to hold a single test case.
+type testCase[T any] struct {
+	Input  interface{}
+	Expect T
+	Err    error
+}
+
+// runTests is a generic helper that executes the coercion function against
+// all the given test cases. It verifies that errors and values match expectations.
+func runTests[T any](t *testing.T, name string, cases []testCase[T],
+	coerceFn func(interface{}) (T, error), equal func(a, b T) bool) {
+	t.Run(name, func(t *testing.T) {
+		for _, tc := range cases {
+			result, err := coerceFn(tc.Input)
+			if err != nil && tc.Err == nil {
+				t.Errorf(DidNotExpectError, err, tc)
+				t.FailNow()
+			}
+			if tc.Err != nil && tc.Err != err {
+				t.Errorf(ExpectedError, tc.Err, err)
+				t.FailNow()
+			}
+			if tc.Err == nil && !equal(result, tc.Expect) {
+				t.Errorf(ExpectedProperCoercion, err, result, tc)
+			}
+		}
+	})
+}
+
 func TestCoerceTypeFns(t *testing.T) {
-	t.Run("coerceTypeInt", func(t *testing.T) {
-		cases := []struct {
-			Input  interface{}
-			Expect int
-			Err    error
-		}{
-			{Input: "200", Expect: 200},
-			{Input: int(200), Expect: 200},
-			{Input: float64(200), Expect: 200},
-			{Input: false, Expect: 0, Err: ErrUnsupportedValue},
-		}
+	runTests[int](t, "coerceTypeInt", []testCase[int]{
+		{Input: "200", Expect: 200},
+		{Input: int(200), Expect: 200},
+		{Input: float64(200), Expect: 200},
+		{Input: false, Expect: 0, Err: ErrUnsupportedValue},
+	}, coerceTypeInt, func(a, b int) bool { return a == b })
 
-		for _, tc := range cases {
-
-			result, err := coerceTypeInt(tc.Input)
-			if err != nil && tc.Err == nil {
-				t.Errorf("Did not expect error %s\n%+v", err, tc)
-				t.FailNow()
-			}
-
-			if tc.Err != nil && tc.Err != err {
-				t.Errorf("Expected an error to be thrown\nExpected: %s\nReceived: %s", tc.Err, err)
-				t.FailNow()
-			}
-
-			if tc.Err == nil && result != tc.Expect {
-				t.Errorf("Expected proper coercion %s\n%+v\n%+v", err, result, tc)
-			}
-		}
+	runTests[float64](t, "coerceTypeFloat", []testCase[float64]{
+		{Input: "200", Expect: 200},
+		{Input: int(200), Expect: 200},
+		{Input: float64(200), Expect: 200},
+		{Input: false, Expect: 0, Err: ErrUnsupportedValue},
+	}, coerceTypeFloat, func(a, b float64) bool {
+		return math.Abs(a-b) <= epsilon
 	})
 
-	t.Run("coerceTypeFloat", func(t *testing.T) {
-		cases := []struct {
-			Input  interface{}
-			Expect float64
-			Err    error
-		}{
-			{Input: "200", Expect: 200},
-			{Input: int(200), Expect: 200},
-			{Input: float64(200), Expect: 200},
-			{Input: false, Expect: 0, Err: ErrUnsupportedValue},
-		}
+	runTests[bool](t, "coerceTypeBool", []testCase[bool]{
+		{Input: "true", Expect: true},
+		{Input: true, Expect: true},
+		{Input: "1", Expect: true},
+		{Input: "bubblegum", Expect: false, Err: ErrUnsupportedValue},
+	}, coerceTypeBool, func(a, b bool) bool { return a == b })
 
-		for _, tc := range cases {
-
-			result, err := coerceTypeFloat(tc.Input)
-			if err != nil && tc.Err == nil {
-				t.Errorf("Did not expect error %s\n%+v", err, tc)
-				t.FailNow()
-			}
-
-			if tc.Err != nil && tc.Err != err {
-				t.Errorf("Expected an error to be thrown\nExpected: %s\nReceived: %s", tc.Err, err)
-				t.FailNow()
-			}
-
-			if tc.Err == nil && math.Abs(result-tc.Expect) > epsilon {
-				t.Errorf("Expected proper coercion %s\n%+v\n%+v", err, result, tc)
-			}
-		}
-	})
-
-	t.Run("coerceTypeBool", func(t *testing.T) {
-		cases := []struct {
-			Input  interface{}
-			Expect bool
-			Err    error
-		}{
-			{Input: "true", Expect: true},
-			{Input: true, Expect: true},
-			{Input: "1", Expect: true},
-			{Input: "bubblegum", Expect: false, Err: ErrUnsupportedValue},
-		}
-
-		for _, tc := range cases {
-
-			result, err := coerceTypeBool(tc.Input)
-			if err != nil && tc.Err == nil {
-				t.Errorf("Did not expect error %s\n%+v", err, tc)
-				t.FailNow()
-			}
-
-			if tc.Err != nil && tc.Err != err {
-				t.Errorf("Expected an error to be thrown\nExpected: %s\nReceived: %s", tc.Err, err)
-				t.FailNow()
-			}
-
-			if tc.Err == nil && result != tc.Expect {
-				t.Errorf("Expected proper coercion %s\n%+v\n%+v", err, result, tc)
-			}
-		}
-	})
-
-	t.Run("coerceTypeString", func(t *testing.T) {
-		cases := []struct {
-			Input  interface{}
-			Expect string
-			Err    error
-		}{
-			{Input: "true", Expect: "true"},
-			{Input: false, Err: ErrUnsupportedValue},
-			{Input: 0.0, Err: ErrUnsupportedValue},
-			{Input: 0, Err: ErrUnsupportedValue},
-		}
-
-		for _, tc := range cases {
-
-			result, err := coerceTypeString(tc.Input)
-			if err != nil && tc.Err == nil {
-				t.Errorf("Did not expect error %s\n%+v", err, tc)
-				t.FailNow()
-			}
-
-			if tc.Err != nil && tc.Err != err {
-				t.Errorf("Expected an error to be thrown\nExpected: %s\nReceived: %s", tc.Err, err)
-				t.FailNow()
-			}
-
-			if tc.Err == nil && result != tc.Expect {
-				t.Errorf("Expected proper coercion %s\n%+v\n%+v", err, result, tc)
-			}
-		}
-	})
+	runTests[string](t, "coerceTypeString", []testCase[string]{
+		{Input: "true", Expect: "true"},
+		{Input: false, Err: ErrUnsupportedValue},
+		{Input: 0.0, Err: ErrUnsupportedValue},
+		{Input: 0, Err: ErrUnsupportedValue},
+	}, coerceTypeString, func(a, b string) bool { return a == b })
 }
