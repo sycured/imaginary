@@ -61,7 +61,7 @@ type ImageInfo struct {
 	Orientation int    `json:"orientation"`
 }
 
-func Info(buf []byte, o ImageOptions) (Image, error) {
+func Info(buf []byte, _ ImageOptions) (Image, error) {
 	// We're not handling an image here, but we reused the struct.
 	// An interface will be definitively better here.
 	image := Image{Mime: "application/json"}
@@ -224,7 +224,7 @@ func Rotate(buf []byte, o ImageOptions) (Image, error) {
 	return Process(buf, opts)
 }
 
-func AutoRotate(buf []byte, o ImageOptions) (out Image, err error) {
+func AutoRotate(buf []byte, _ ImageOptions) (out Image, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch value := r.(type) {
