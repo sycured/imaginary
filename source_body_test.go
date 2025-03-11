@@ -27,6 +27,7 @@ import (
 )
 
 const fixtureFile = "testdata/large.jpg"
+const XTestReadBody = "X-Test-ReadBody"
 
 func TestSourceBodyMatch(t *testing.T) {
 	u, _ := url.Parse("http://foo")
@@ -34,7 +35,7 @@ func TestSourceBodyMatch(t *testing.T) {
 	source := NewBodyImageSource(&SourceConfig{})
 
 	if !source.Matches(req) {
-		t.Error("Cannot match the request")
+		t.Error(CannotMatchRequest)
 	}
 }
 
@@ -45,7 +46,7 @@ func testHelper(t *testing.T, source ImageSource, fixture string, additionalAsse
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
 		// Use the interface methods
 		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
+			t.Fatal(CannotMatchRequest)
 		}
 
 		body, _, err = source.GetImage(r)
@@ -82,9 +83,9 @@ func TestReadBody(t *testing.T) {
 	testHelper(t, source, fixtureFile, func(t *testing.T, body []byte, w *httptest.ResponseRecorder) {
 		// Add test-specific assertions
 		expectedHeader := "true"
-		w.Header().Set("X-Test-ReadBody", expectedHeader) // Simulate a header
-		if w.Header().Get("X-Test-ReadBody") != expectedHeader {
-			t.Errorf("Expected header 'X-Test-ReadBody' to be '%s', but got '%s'", expectedHeader, w.Header().Get("X-Test-ReadBody"))
+		w.Header().Set(XTestReadBody, expectedHeader) // Simulate a header
+		if w.Header().Get(XTestReadBody) != expectedHeader {
+			t.Errorf("Expected header 'X-Test-ReadBody' to be '%s', but got '%s'", expectedHeader, w.Header().Get(XTestReadBody))
 		}
 	})
 }

@@ -23,6 +23,8 @@ import (
 	"testing"
 )
 
+const InvalidMimeType = "Invalid image MIME type"
+
 func TestImageResize(t *testing.T) {
 	t.Run("Width and Height defined", func(t *testing.T) {
 		opts := ImageOptions{Width: 300, Height: 300}
@@ -32,8 +34,8 @@ func TestImageResize(t *testing.T) {
 		if err != nil {
 			t.Errorf("Cannot process image: %s", err)
 		}
-		if img.Mime != "image/jpeg" {
-			t.Error("Invalid image MIME type")
+		if img.Mime != ImageJPEG {
+			t.Error(InvalidMimeType)
 		}
 		if assertSize(img.Body, opts.Width, opts.Height) != nil {
 			t.Errorf("Invalid image size, expected: %dx%d", opts.Width, opts.Height)
@@ -48,8 +50,8 @@ func TestImageResize(t *testing.T) {
 		if err != nil {
 			t.Errorf("Cannot process image: %s", err)
 		}
-		if img.Mime != "image/jpeg" {
-			t.Error("Invalid image MIME type")
+		if img.Mime != ImageJPEG {
+			t.Error(InvalidMimeType)
 		}
 		if err := assertSize(img.Body, 300, 404); err != nil {
 			t.Error(err)
@@ -64,8 +66,8 @@ func TestImageResize(t *testing.T) {
 		if err != nil {
 			t.Errorf("Cannot process image: %s", err)
 		}
-		if img.Mime != "image/jpeg" {
-			t.Error("Invalid image MIME type")
+		if img.Mime != ImageJPEG {
+			t.Error(InvalidMimeType)
 		}
 
 		// The original image is 550x740
@@ -82,8 +84,8 @@ func TestImageResize(t *testing.T) {
 		if err != nil {
 			t.Errorf("Cannot process image: %s", err)
 		}
-		if img.Mime != "image/jpeg" {
-			t.Error("Invalid image MIME type")
+		if img.Mime != ImageJPEG {
+			t.Error(InvalidMimeType)
 		}
 
 		// The original image is 550x740
@@ -102,8 +104,8 @@ func TestImageFit(t *testing.T) {
 	if err != nil {
 		t.Errorf("Cannot process image: %s", err)
 	}
-	if img.Mime != "image/jpeg" {
-		t.Error("Invalid image MIME type")
+	if img.Mime != ImageJPEG {
+		t.Error(InvalidMimeType)
 	}
 	// 550x740 -> 222.9x300
 	if assertSize(img.Body, 223, 300) != nil {
@@ -117,8 +119,8 @@ func TestImageAutoRotate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Cannot process image: %s", err)
 	}
-	if img.Mime != "image/jpeg" {
-		t.Error("Invalid image MIME type")
+	if img.Mime != ImageJPEG {
+		t.Error(InvalidMimeType)
 	}
 	if assertSize(img.Body, 550, 740) != nil {
 		t.Errorf("Invalid image size, expected: %dx%d", 550, 740)
@@ -152,7 +154,7 @@ func TestImagePipelineOperations(t *testing.T) {
 		t.Errorf("Cannot process image: %s", err)
 	}
 	if img.Mime != "image/webp" {
-		t.Error("Invalid image MIME type")
+		t.Error(InvalidMimeType)
 	}
 	if assertSize(img.Body, width, height) != nil {
 		t.Errorf("Invalid image size, expected: %dx%d", width, height)

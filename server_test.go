@@ -33,6 +33,11 @@ import (
 	"github.com/h2non/bimg"
 )
 
+const CacheControl = "cache-control"
+const InvalidImageType = "Invalid image type"
+const InvalidResponseStatus = "Invalid response status: %d"
+const LargeImageFileWithPath = "testdata/large.jpg"
+
 func TestIndex(t *testing.T) {
 	opts := ServerOptions{PathPrefix: "/", MaxAllowedPixels: 18.0}
 	ts := testServer(indexController(opts))
@@ -90,7 +95,7 @@ func TestCrop(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -123,7 +128,7 @@ func TestResize(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -156,7 +161,7 @@ func TestEnlarge(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -189,7 +194,7 @@ func TestExtract(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -241,7 +246,7 @@ func TestTypeAuto(t *testing.T) {
 		}
 
 		if bimg.DetermineImageTypeName(image) != test.expected {
-			t.Fatalf("Invalid image type")
+			t.Fatalf(InvalidImageType)
 		}
 
 		if res.Header.Get("Vary") != "Accept" {
@@ -288,7 +293,7 @@ func TestFit(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -298,7 +303,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 	LoadSources(opts)
 
 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		buf, _ := os.ReadFile("testdata/large.jpg")
+		buf, _ := os.ReadFile(LargeImageFileWithPath)
 		_, _ = w.Write(buf)
 	}))
 	defer tsImage.Close()
@@ -312,7 +317,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 		t.Fatal("Cannot perform the request")
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -329,7 +334,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -352,7 +357,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 		t.Fatal("Request failed")
 	}
 	if res.StatusCode != 400 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 }
 
@@ -370,7 +375,7 @@ func TestMountDirectory(t *testing.T) {
 		t.Fatal("Cannot perform the request")
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -387,7 +392,7 @@ func TestMountDirectory(t *testing.T) {
 	}
 
 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
+		t.Fatalf(InvalidImageType)
 	}
 }
 
@@ -403,7 +408,7 @@ func TestMountInvalidDirectory(t *testing.T) {
 	}
 
 	if res.StatusCode != 400 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 }
 
@@ -424,14 +429,14 @@ func TestMountInvalidPath(t *testing.T) {
 }
 
 func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true, SrcResponseHeaders: []string{"cache-control", "X-Yep"}, HTTPCacheTTL: 100, MaxAllowedPixels: 18.0}
+	opts := ServerOptions{EnableURLSource: true, SrcResponseHeaders: []string{CacheControl, "X-Yep"}, HTTPCacheTTL: 100, MaxAllowedPixels: 18.0}
 	LoadSources(opts)
 	srcHeaderValue := "original-header"
 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Cache-Control", srcHeaderValue)
+		w.Header().Set(CacheControl, srcHeaderValue)
 		w.Header().Set("X-yep", srcHeaderValue)
 		w.Header().Set("X-Nope", srcHeaderValue)
-		buf, _ := os.ReadFile("testdata/large.jpg")
+		buf, _ := os.ReadFile(LargeImageFileWithPath)
 		_, _ = w.Write(buf)
 	}))
 	defer tsImage.Close()
@@ -449,7 +454,7 @@ func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
 		t.Fatal("Cannot perform the request")
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -460,7 +465,7 @@ func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
 		t.Fatalf("Empty response body")
 	}
 	// make sure the proper header values are passed through
-	if res.Header.Get("cache-control") != srcHeaderValue || res.Header.Get("x-yep") != srcHeaderValue {
+	if res.Header.Get(CacheControl) != srcHeaderValue || res.Header.Get("x-yep") != srcHeaderValue {
 		t.Fatalf("Header response not passed through properly")
 	}
 	// make sure unspecified headers are dropped
@@ -471,13 +476,13 @@ func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
 }
 func TestSrcResponseHeaderWithoutSrcCacheControl(t *testing.T) {
 	ttl := 1234567
-	opts := ServerOptions{EnableURLSource: true, SrcResponseHeaders: []string{"cache-control", "X-Yep"}, HTTPCacheTTL: ttl, MaxAllowedPixels: 18.0}
+	opts := ServerOptions{EnableURLSource: true, SrcResponseHeaders: []string{CacheControl, "X-Yep"}, HTTPCacheTTL: ttl, MaxAllowedPixels: 18.0}
 	LoadSources(opts)
 	srcHeaderValue := "original-header"
 
 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("X-yep", srcHeaderValue)
-		buf, _ := os.ReadFile("testdata/large.jpg")
+		buf, _ := os.ReadFile(LargeImageFileWithPath)
 		_, _ = w.Write(buf)
 	}))
 	defer tsImage.Close()
@@ -495,7 +500,7 @@ func TestSrcResponseHeaderWithoutSrcCacheControl(t *testing.T) {
 		t.Fatal("Cannot perform the request")
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
+		t.Fatalf(InvalidResponseStatus, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -506,7 +511,7 @@ func TestSrcResponseHeaderWithoutSrcCacheControl(t *testing.T) {
 		t.Fatalf("Empty response body")
 	}
 	// should defer to the provided HTTPCacheTTL value
-	if !strings.Contains(res.Header.Get("cache-control"), strconv.Itoa(ttl)) {
+	if !strings.Contains(res.Header.Get(CacheControl), strconv.Itoa(ttl)) {
 		t.Fatalf("cache-control header doesn't contain expected value")
 	}
 }
