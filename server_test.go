@@ -72,7 +72,7 @@ func TestCrop(t *testing.T) {
 	url := ts.URL + "?width=300"
 	defer ts.Close()
 
-	res, err := http.Post(url, "image/jpeg", buf)
+	res, err := http.Post(url, ImageJPEG, buf)
 	if err != nil {
 		t.Fatal(CannotPerformRequest)
 	}
@@ -109,7 +109,7 @@ func TestResize(t *testing.T) {
 	url := ts.URL + "?width=300&nocrop=false"
 	defer ts.Close()
 
-	res, err := http.Post(url, "image/jpeg", buf)
+	res, err := http.Post(url, ImageJPEG, buf)
 	if err != nil {
 		t.Fatal(CannotPerformRequest)
 	}
@@ -142,7 +142,7 @@ func TestEnlarge(t *testing.T) {
 	url := ts.URL + "?width=300&height=200"
 	defer ts.Close()
 
-	res, err := http.Post(url, "image/jpeg", buf)
+	res, err := http.Post(url, ImageJPEG, buf)
 	if err != nil {
 		t.Fatal(CannotPerformRequest)
 	}
@@ -175,7 +175,7 @@ func TestExtract(t *testing.T) {
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120"
 	defer ts.Close()
 
-	res, err := http.Post(url, "image/jpeg", buf)
+	res, err := http.Post(url, ImageJPEG, buf)
 	if err != nil {
 		t.Fatal(CannotPerformRequest)
 	}
@@ -202,6 +202,54 @@ func TestExtract(t *testing.T) {
 	}
 }
 
+func runTypeAutoCase(t *testing.T, acceptHeader, expected string) {
+	ts := testServer(controller(Crop))
+	defer ts.Close()
+
+	buf := readFile(LargeImageFileWithExt)
+	url := ts.URL + "?width=300&type=auto"
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Add("Content-Type", ImageJPEG)
+	req.Header.Add("Accept", acceptHeader)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(CannotPerformRequest)
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	if res.StatusCode != 200 {
+		t.Fatalf(InvalidResponseStatusS, res.Status)
+	}
+	if res.Header.Get("Content-Length") == "" {
+		t.Fatal("Empty content length response")
+	}
+
+	image, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf(EmptyResponseBody)
+	}
+
+	if err := assertSize(image, 300, 1080); err != nil {
+		t.Error(err)
+	}
+	if bimg.DetermineImageTypeName(image) != expected {
+		t.Fatalf(InvalidImageType)
+	}
+	if res.Header.Get("Vary") != "Accept" {
+		t.Fatal("Vary header not set correctly")
+	}
+}
+
 func TestTypeAuto(t *testing.T) {
 	cases := []struct {
 		acceptHeader string
@@ -215,47 +263,7 @@ func TestTypeAuto(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		ts := testServer(controller(Crop))
-		buf := readFile(LargeImageFileWithExt)
-		url := ts.URL + "?width=300&type=auto"
-		defer ts.Close()
-
-		req, _ := http.NewRequest(http.MethodPost, url, buf)
-		req.Header.Add("Content-Type", "image/jpeg")
-		req.Header.Add("Accept", test.acceptHeader)
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatal(CannotPerformRequest)
-		}
-
-		if res.StatusCode != 200 {
-			t.Fatalf(InvalidResponseStatusS, res.Status)
-		}
-
-		if res.Header.Get("Content-Length") == "" {
-			t.Fatal("Empty content length response")
-		}
-
-		image, err := io.ReadAll(res.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(image) == 0 {
-			t.Fatalf(EmptyResponseBody)
-		}
-
-		err = assertSize(image, 300, 1080)
-		if err != nil {
-			t.Error(err)
-		}
-
-		if bimg.DetermineImageTypeName(image) != test.expected {
-			t.Fatalf(InvalidImageType)
-		}
-
-		if res.Header.Get("Vary") != "Accept" {
-			t.Fatal("Vary header not set correctly")
-		}
+		runTypeAutoCase(t, test.acceptHeader, test.expected)
 	}
 }
 
@@ -273,7 +281,7 @@ func TestFit(t *testing.T) {
 	url := ts.URL + "?width=300&height=300"
 	defer ts.Close()
 
-	res, err := http.Post(url, "image/jpeg", bytes.NewReader(original))
+	res, err := http.Post(url, ImageJPEG, bytes.NewReader(original))
 	if err != nil {
 		t.Fatal(CannotPerformRequest)
 	}
