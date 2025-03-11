@@ -35,20 +35,22 @@ func IsImageMimeTypeSupported(mime string) bool {
 // ImageType returns the image type based on the given image type alias.
 func ImageType(name string) bimg.ImageType {
 	switch strings.ToLower(name) {
-	case "jpeg":
-		return bimg.JPEG
-	case "png":
-		return bimg.PNG
-	case "webp":
-		return bimg.WEBP
-	case "tiff":
-		return bimg.TIFF
+	case "avif":
+		return bimg.AVIF
 	case "gif":
 		return bimg.GIF
-	case SVG:
-		return bimg.SVG
+	case "jpeg":
+		return bimg.JPEG
 	case "pdf":
 		return bimg.PDF
+	case "png":
+		return bimg.PNG
+	case SVG:
+		return bimg.SVG
+	case "tiff":
+		return bimg.TIFF
+	case "webp":
+		return bimg.WEBP
 	default:
 		return bimg.UNKNOWN
 	}
@@ -57,18 +59,20 @@ func ImageType(name string) bimg.ImageType {
 // GetImageMimeType returns the MIME type based on the given image type code.
 func GetImageMimeType(code bimg.ImageType) string {
 	switch code {
-	case bimg.PNG:
-		return "image/png"
-	case bimg.WEBP:
-		return "image/webp"
-	case bimg.TIFF:
-		return "image/tiff"
+	case bimg.AVIF:
+		return "image/avif"
 	case bimg.GIF:
 		return "image/gif"
-	case bimg.SVG:
-		return "image/svg+xml"
 	case bimg.PDF:
 		return "application/pdf"
+	case bimg.PNG:
+		return "image/png"
+	case bimg.SVG:
+		return "image/svg+xml"
+	case bimg.TIFF:
+		return "image/tiff"
+	case bimg.WEBP:
+		return "image/webp"
 	default:
 		return "image/jpeg"
 	}

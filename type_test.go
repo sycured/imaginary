@@ -31,12 +31,14 @@ func TestIsImageTypeSupported(t *testing.T) {
 		expected bool
 	}{
 		{"image/jpeg", true},
+		{"image/avif", true},
 		{"image/png", true},
 		{"image/webp", true},
 		{"IMAGE/JPEG", true},
 		{"png", false},
 		{"multipart/form-data; encoding=utf-8", false},
 		{"application/json", false},
+		{"image/avif", bimg.IsImageTypeSupportedByVips(bimg.AVIF).Load},
 		{"image/gif", bimg.IsImageTypeSupportedByVips(bimg.GIF).Load},
 		{"image/svg+xml", bimg.IsImageTypeSupportedByVips(bimg.SVG).Load},
 		{"image/svg", bimg.IsImageTypeSupportedByVips(bimg.SVG).Load},
@@ -59,6 +61,7 @@ func TestImageType(t *testing.T) {
 		name     string
 		expected bimg.ImageType
 	}{
+		{"avif", bimg.AVIF},
 		{"jpeg", bimg.JPEG},
 		{"png", bimg.PNG},
 		{"webp", bimg.WEBP},
@@ -85,6 +88,7 @@ func TestGetImageMimeType(t *testing.T) {
 		name     bimg.ImageType
 		expected string
 	}{
+		{bimg.AVIF, "image/avif"},
 		{bimg.JPEG, "image/jpeg"},
 		{bimg.PNG, "image/png"},
 		{bimg.WEBP, "image/webp"},

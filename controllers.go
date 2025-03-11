@@ -16,10 +16,12 @@ import (
 const (
 	ContentType     = "Content-Type"
 	ContentTypeJSON = "application/json"
+	ImageAVIF       = "image/avif"
 	ImageJPEG       = "image/jpeg"
 	ImagePNG        = "image/png"
 	ImageSVG        = "image/svg+xml"
 	ImageWebP       = "image/webp"
+	AVIF            = "avif"
 	JPEG            = "jpeg"
 	PNG             = "png"
 	WebP            = "webp"
@@ -80,12 +82,14 @@ func determineAcceptMimeType(accept string) string {
 	for _, v := range strings.Split(accept, ",") {
 		mediaType, _, _ := mime.ParseMediaType(v)
 		switch mediaType {
-		case ImageWebP:
-			return WebP
-		case ImagePNG:
-			return PNG
+		case ImageAVIF:
+			return AVIF
 		case ImageJPEG:
 			return JPEG
+		case ImagePNG:
+			return PNG
+		case ImageWebP:
+			return WebP
 		}
 	}
 
@@ -127,6 +131,9 @@ func inferMimeType(buf []byte) (string, error) {
 		if err == nil && kind.MIME.Value != "" {
 			mimeType = kind.MIME.Value
 		}
+	}
+	if mimeType == "image/bmp" {
+		mimeType = "image/magick"
 	}
 	if strings.Contains(mimeType, "text/plain") && len(buf) > 8 && bimg.IsSVGImage(buf) {
 		mimeType = ImageSVG
