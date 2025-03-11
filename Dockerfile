@@ -1,20 +1,18 @@
 ARG GOLANG_VERSION=1.17
-FROM golang:${GOLANG_VERSION}-bullseye as builder
+FROM golang:${GOLANG_VERSION}-bullseye AS builder
 
 ARG IMAGINARY_VERSION=dev
-ARG LIBVIPS_VERSION=8.12.2
-ARG GOLANGCILINT_VERSION=1.29.0
+ARG LIBVIPS_VERSION=8.16.0
+ARG GOLANGCILINT_VERSION=1.64.6
 
 # Installs libvips + required libraries
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  ca-certificates \
-  automake build-essential curl \
-  gobject-introspection gtk-doc-tools libglib2.0-dev libjpeg62-turbo-dev libpng-dev \
-  libwebp-dev libtiff5-dev libgif-dev libexif-dev libxml2-dev libpoppler-glib-dev \
-  swig libmagickwand-dev libpango1.0-dev libmatio-dev libopenslide-dev libcfitsio-dev \
-  libgsf-1-dev fftw3-dev liborc-0.4-dev librsvg2-dev libimagequant-dev libheif-dev && \
+  automake build-essential ca-certificates curl fftw3-dev gobject-introspection gtk-doc-tools libcfitsio-dev \
+  libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev libjpeg62-turbo-dev \
+  libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev libpng-dev libpoppler-glib-dev \
+  librsvg2-dev libtiff5-dev libwebp-dev libxml2-dev swig && \
   cd /tmp && \
   curl -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
   tar zvxf vips-${LIBVIPS_VERSION}.tar.gz && \
@@ -36,7 +34,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 WORKDIR /tmp
 RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
 
-WORKDIR ${GOPATH}/src/github.com/h2non/imaginary
+WORKDIR ${GOPATH}/src/github.com/sycured/imaginary
 
 # Cache go modules
 ENV GO111MODULE=on
@@ -50,8 +48,12 @@ RUN go mod download
 COPY . .
 
 # Run quality control
-RUN go test ./... -test.v -race -test.coverprofile=atomic .
-RUN golangci-lint run .
+ARG TARGETPLATFORM
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] ; then \
+  go test ./... -test.v -test.coverprofile=atomic . ; \
+  else go test ./... -test.v -race -test.coverprofile=atomic . ; \
+  fi; \
+  golangci-lint run .
 
 # Compile imaginary
 RUN go build -a \
@@ -63,11 +65,11 @@ FROM debian:bullseye-slim
 
 ARG IMAGINARY_VERSION
 
-LABEL maintainer="tomas@aparicio.me" \
+LABEL maintainer="60801403+sycured@users.noreply.github.com" \
       org.label-schema.description="Fast, simple, scalable HTTP microservice for high-level image processing with first-class Docker support" \
       org.label-schema.schema-version="1.0" \
-      org.label-schema.url="https://github.com/h2non/imaginary" \
-      org.label-schema.vcs-url="https://github.com/h2non/imaginary" \
+      org.label-schema.url="https://github.com/sycured/imaginary" \
+      org.label-schema.vcs-url="https://github.com/sycured/imaginary" \
       org.label-schema.version="${IMAGINARY_VERSION}"
 
 COPY --from=builder /usr/local/lib /usr/local/lib
@@ -78,10 +80,9 @@ COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  procps libglib2.0-0 libjpeg62-turbo libpng16-16 libopenexr25 \
-  libwebp6 libwebpmux3 libwebpdemux2 libtiff5 libgif7 libexif12 libxml2 libpoppler-glib8 \
-  libmagickwand-6.q16-6 libpango1.0-0 libmatio11 libopenslide0 libjemalloc2 \
-  libgsf-1-114 fftw3 liborc-0.4-0 librsvg2-2 libcfitsio9 libimagequant0 libheif1 && \
+   fftw3 libcfitsio9 libexif12 libgif7 libglib2.0-0 libgsf-1-114 libheif1 libimagequant0 libjemalloc2 libjpeg62-turbo \
+   libmagickwand-6.q16-6 libmatio11 libopenexr25 libopenslide0 liborc-0.4-0 libpango1.0-0 libpng16-16 libpoppler-glib8 \
+   librsvg2-2 libtiff5 libwebp6 libwebpdemux2 libwebpmux3 libxml2 procps && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   apt-get autoremove -y && \
   apt-get autoclean && \
