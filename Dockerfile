@@ -1,4 +1,4 @@
-ARG GOLANG_VERSION=1.17
+ARG GOLANG_VERSION=1.24
 FROM golang:${GOLANG_VERSION}-bullseye AS builder
 
 ARG IMAGINARY_VERSION=dev
@@ -6,16 +6,16 @@ ARG LIBVIPS_VERSION=8.16.0
 ARG GOLANGCILINT_VERSION=1.64.6
 
 # Installs libvips + required libraries
+ADD https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz /tmp/vips-${LIBVIPS_VERSION}.tar.xz
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  automake build-essential ca-certificates curl fftw3-dev gobject-introspection gtk-doc-tools libcfitsio-dev \
-  libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev libjpeg62-turbo-dev \
-  libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev libpng-dev libpoppler-glib-dev \
-  librsvg2-dev libtiff5-dev libwebp-dev libxml2-dev swig && \
+    automake build-essential ca-certificates curl fftw3-dev gobject-introspection gtk-doc-tools libcfitsio-dev \
+    libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev libjpeg62-turbo-dev \
+    libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev libpng-dev libpoppler-glib-dev \
+    librsvg2-dev libtiff5-dev libwebp-dev libxml2-dev swig && \
   cd /tmp && \
-  curl --proto "=https" --tlsv1.2 -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
-  tar zvxf vips-${LIBVIPS_VERSION}.tar.gz && \
+  tar vxf vips-${LIBVIPS_VERSION}.tar.xz && \
   cd /tmp/vips-${LIBVIPS_VERSION} && \
 	CFLAGS="-g -O3" CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0 -g -O3" \
     ./configure \
@@ -26,9 +26,8 @@ RUN DEBIAN_FRONTEND=noninteractive \
     --enable-gtk-doc-html=no \
     --enable-gtk-doc=no \
     --enable-pyvips8=no && \
-  make && \
-  make install && \
-  ldconfig
+  make && make install && ldconfig && \
+  rm -rf vips-${LIBVIPS_VERSION}.tar.xz vips-${LIBVIPS_VERSION}
 
 # Installing golangci-lint
 WORKDIR /tmp
