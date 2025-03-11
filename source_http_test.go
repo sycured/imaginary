@@ -30,6 +30,7 @@ const CannotMatchRequest = "Cannot match the request"
 const ExpectedAllowedOrigins = "Expected '%s' to be allowed with origins: %+v"
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
+const HttpBarCom = "http://bar.com"
 const XCustom = "X-Custom"
 const XToken = "X-Token"
 
@@ -176,7 +177,7 @@ func TestHttpImageSourceNotForwardHeaders(t *testing.T) {
 		XToken,
 	}
 
-	testURL := createURL("http://bar.com", t)
+	testURL := createURL(HttpBarCom, t)
 
 	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
 	r.Header.Set("Not-Forward", "foobar")
@@ -199,7 +200,7 @@ func TestHttpImageSourceForwardedHeadersNotOverride(t *testing.T) {
 		XCustom,
 	}
 
-	testURL := createURL("http://bar.com", t)
+	testURL := createURL(HttpBarCom, t)
 
 	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
 	r.Header.Set("Authorization", "foobar")
@@ -222,7 +223,7 @@ func TestHttpImageSourceCaseSensitivityInForwardedHeaders(t *testing.T) {
 		XToken,
 	}
 
-	testURL := createURL("http://bar.com", t)
+	testURL := createURL(HttpBarCom, t)
 
 	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
 	r.Header.Set(XCustom, "foobar")
@@ -242,7 +243,7 @@ func TestHttpImageSourceCaseSensitivityInForwardedHeaders(t *testing.T) {
 func TestHttpImageSourceEmptyForwardedHeaders(t *testing.T) {
 	var cases []string
 
-	testURL := createURL("http://bar.com", t)
+	testURL := createURL(HttpBarCom, t)
 
 	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?url="+testURL.String(), nil)
 

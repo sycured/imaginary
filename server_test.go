@@ -34,8 +34,12 @@ import (
 )
 
 const CacheControl = "cache-control"
+const CannotPerformRequest = "Cannot perform the request"
+const EmptyResponseBody = "Empty response body"
 const InvalidImageType = "Invalid image type"
-const InvalidResponseStatus = "Invalid response status: %d"
+const InvalidResponseStatusD = "Invalid response status: %d"
+const InvalidResponseStatusS = "Invalid response status: %s"
+const LargeImageFileWithExt = "large.jpg"
 const LargeImageFileWithPath = "testdata/large.jpg"
 
 func TestIndex(t *testing.T) {
@@ -49,7 +53,7 @@ func TestIndex(t *testing.T) {
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	body, err := io.ReadAll(res.Body)
@@ -64,17 +68,17 @@ func TestIndex(t *testing.T) {
 
 func TestCrop(t *testing.T) {
 	ts := testServer(controller(Crop))
-	buf := readFile("large.jpg")
+	buf := readFile(LargeImageFileWithExt)
 	url := ts.URL + "?width=300"
 	defer ts.Close()
 
 	res, err := http.Post(url, "image/jpeg", buf)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	if res.Header.Get("Content-Length") == "" {
@@ -86,7 +90,7 @@ func TestCrop(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 300, 1080)
@@ -101,17 +105,17 @@ func TestCrop(t *testing.T) {
 
 func TestResize(t *testing.T) {
 	ts := testServer(controller(Resize))
-	buf := readFile("large.jpg")
+	buf := readFile(LargeImageFileWithExt)
 	url := ts.URL + "?width=300&nocrop=false"
 	defer ts.Close()
 
 	res, err := http.Post(url, "image/jpeg", buf)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -119,7 +123,7 @@ func TestResize(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 300, 1080)
@@ -134,17 +138,17 @@ func TestResize(t *testing.T) {
 
 func TestEnlarge(t *testing.T) {
 	ts := testServer(controller(Enlarge))
-	buf := readFile("large.jpg")
+	buf := readFile(LargeImageFileWithExt)
 	url := ts.URL + "?width=300&height=200"
 	defer ts.Close()
 
 	res, err := http.Post(url, "image/jpeg", buf)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -152,7 +156,7 @@ func TestEnlarge(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 300, 200)
@@ -167,17 +171,17 @@ func TestEnlarge(t *testing.T) {
 
 func TestExtract(t *testing.T) {
 	ts := testServer(controller(Extract))
-	buf := readFile("large.jpg")
+	buf := readFile(LargeImageFileWithExt)
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120"
 	defer ts.Close()
 
 	res, err := http.Post(url, "image/jpeg", buf)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -185,7 +189,7 @@ func TestExtract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 200, 120)
@@ -212,7 +216,7 @@ func TestTypeAuto(t *testing.T) {
 
 	for _, test := range cases {
 		ts := testServer(controller(Crop))
-		buf := readFile("large.jpg")
+		buf := readFile(LargeImageFileWithExt)
 		url := ts.URL + "?width=300&type=auto"
 		defer ts.Close()
 
@@ -221,11 +225,11 @@ func TestTypeAuto(t *testing.T) {
 		req.Header.Add("Accept", test.acceptHeader)
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
-			t.Fatal("Cannot perform the request")
+			t.Fatal(CannotPerformRequest)
 		}
 
 		if res.StatusCode != 200 {
-			t.Fatalf("Invalid response status: %s", res.Status)
+			t.Fatalf(InvalidResponseStatusS, res.Status)
 		}
 
 		if res.Header.Get("Content-Length") == "" {
@@ -237,7 +241,7 @@ func TestTypeAuto(t *testing.T) {
 			t.Fatal(err)
 		}
 		if len(image) == 0 {
-			t.Fatalf("Empty response body")
+			t.Fatalf(EmptyResponseBody)
 		}
 
 		err = assertSize(image, 300, 1080)
@@ -258,7 +262,7 @@ func TestTypeAuto(t *testing.T) {
 func TestFit(t *testing.T) {
 	var err error
 
-	buf := readFile("large.jpg")
+	buf := readFile(LargeImageFileWithExt)
 	original, _ := io.ReadAll(buf)
 	err = assertSize(original, 1920, 1080)
 	if err != nil {
@@ -271,11 +275,11 @@ func TestFit(t *testing.T) {
 
 	res, err := http.Post(url, "image/jpeg", bytes.NewReader(original))
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -283,7 +287,7 @@ func TestFit(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	// The reference image has a ratio of 1.778, this should produce a height of 168.75
@@ -314,10 +318,10 @@ func TestRemoteHTTPSource(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -325,7 +329,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 200, 200)
@@ -357,7 +361,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 		t.Fatal("Request failed")
 	}
 	if res.StatusCode != 400 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 }
 
@@ -372,10 +376,10 @@ func TestMountDirectory(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -383,7 +387,7 @@ func TestMountDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 
 	err = assertSize(image, 200, 200)
@@ -404,11 +408,11 @@ func TestMountInvalidDirectory(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 400 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 }
 
@@ -420,11 +424,11 @@ func TestMountInvalidPath(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 
 	if res.StatusCode != 400 {
-		t.Fatalf("Invalid response status: %s", res.Status)
+		t.Fatalf(InvalidResponseStatusS, res.Status)
 	}
 }
 
@@ -451,10 +455,10 @@ func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -462,7 +466,7 @@ func TestSrcResponseHeaderWithCacheControl(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 	// make sure the proper header values are passed through
 	if res.Header.Get(CacheControl) != srcHeaderValue || res.Header.Get("x-yep") != srcHeaderValue {
@@ -497,10 +501,10 @@ func TestSrcResponseHeaderWithoutSrcCacheControl(t *testing.T) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		t.Fatal("Cannot perform the request")
+		t.Fatal(CannotPerformRequest)
 	}
 	if res.StatusCode != 200 {
-		t.Fatalf(InvalidResponseStatus, res.StatusCode)
+		t.Fatalf(InvalidResponseStatusD, res.StatusCode)
 	}
 
 	image, err := io.ReadAll(res.Body)
@@ -508,7 +512,7 @@ func TestSrcResponseHeaderWithoutSrcCacheControl(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(image) == 0 {
-		t.Fatalf("Empty response body")
+		t.Fatalf(EmptyResponseBody)
 	}
 	// should defer to the provided HTTPCacheTTL value
 	if !strings.Contains(res.Header.Get(CacheControl), strconv.Itoa(ttl)) {
