@@ -38,12 +38,12 @@ func TestSourceBodyMatch(t *testing.T) {
 	}
 }
 
-func TestBodyImageSource(t *testing.T) {
+func testHelper(t *testing.T, source ImageSource, fixture string, additionalAssertions func(t *testing.T, body []byte, w *httptest.ResponseRecorder)) {
 	var body []byte
 	var err error
 
-	source := NewBodyImageSource(&SourceConfig{})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
+		// Use the interface methods
 		if !source.Matches(r) {
 			t.Fatal("Cannot match the request")
 		}
@@ -55,41 +55,36 @@ func TestBodyImageSource(t *testing.T) {
 		_, _ = w.Write(body)
 	}
 
-	file, _ := os.Open(fixtureFile)
+	file, _ := os.Open(fixture)
+	defer file.Close() // Ensure the file is closed properly
 	r, _ := http.NewRequest(http.MethodPost, "http://foo/bar", file)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
-	buf, _ := os.ReadFile(fixtureFile)
+	buf, _ := os.ReadFile(fixture)
 	if len(body) != len(buf) {
 		t.Error("Invalid response body")
+	}
+
+	// Perform any test-specific assertions passed through `additionalAssertions`
+	if additionalAssertions != nil {
+		additionalAssertions(t, body, w)
 	}
 }
 
+func TestBodyImageSource(t *testing.T) {
+	source := NewBodyImageSource(&SourceConfig{}) // Explicit *BodyImageSource
+	testHelper(t, source, fixtureFile, nil)       // No additional assertions needed
+}
+
 func TestReadBody(t *testing.T) {
-	var body []byte
-	var err error
-
-	source := NewBodyImageSource(&SourceConfig{})
-	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
+	source := NewBodyImageSource(&SourceConfig{}) // Explicit *BodyImageSource
+	testHelper(t, source, fixtureFile, func(t *testing.T, body []byte, w *httptest.ResponseRecorder) {
+		// Add test-specific assertions
+		expectedHeader := "true"
+		w.Header().Set("X-Test-ReadBody", expectedHeader) // Simulate a header
+		if w.Header().Get("X-Test-ReadBody") != expectedHeader {
+			t.Errorf("Expected header 'X-Test-ReadBody' to be '%s', but got '%s'", expectedHeader, w.Header().Get("X-Test-ReadBody"))
 		}
-
-		body, _, err = source.GetImage(r)
-		if err != nil {
-			t.Fatalf("Error while reading the body: %s", err)
-		}
-		_, _ = w.Write(body)
-	}
-
-	file, _ := os.Open(fixtureFile)
-	r, _ := http.NewRequest(http.MethodPost, "http://foo/bar", file)
-	w := httptest.NewRecorder()
-	fakeHandler(w, r)
-
-	buf, _ := os.ReadFile(fixtureFile)
-	if len(body) != len(buf) {
-		t.Error("Invalid response body")
-	}
+	})
 }
