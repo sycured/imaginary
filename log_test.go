@@ -39,8 +39,10 @@ func (tw *testWriter) Write(b []byte) (int, error) {
 // setupTest creates the test server with the provided log level and returns a pointer to testWriter.
 func setupTest(t *testing.T, level string) (*httptest.Server, *testWriter) {
 	writer := &testWriter{}
-	// noopHandler is intentionally empty; it serves as a placeholder.
-	noopHandler := func(w http.ResponseWriter, r *http.Request) {}
+	noopHandler := func(w http.ResponseWriter, r *http.Request) {
+		// noopHandler is an intentionally empty handler.
+		// It acts as a placeholder for situations where no actual request processing is required.
+	}
 	// Create a log handler by wrapping the noop handler.
 	logHandler := NewLog(http.HandlerFunc(noopHandler), writer, level)
 	ts := httptest.NewServer(logHandler)
