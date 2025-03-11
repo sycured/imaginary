@@ -21,6 +21,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -108,5 +109,7 @@ func (h *LogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case "info":
 		record.Log(h.io)
+	default:
+		log.Fatalln("Invalid log level")
 	}
 }
