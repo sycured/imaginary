@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type ServerOptions struct {
@@ -28,6 +29,7 @@ type ServerOptions struct {
 	Gzip               bool // deprecated
 	AuthForwarding     bool
 	EnableURLSource    bool
+	AllowInsecureSSL   bool
 	EnablePlaceholder  bool
 	EnableURLSignature bool
 	URLSignatureKey    string

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -115,6 +116,10 @@ func newHTTPRequest(s *HTTPImageSource, ireq *http.Request, method string, url *
 	// Forward auth header to the target server, if necessary
 	if s.Config.AuthForwarding || s.Config.Authorization != "" {
 		s.setAuthorizationHeader(req, ireq)
+	}
+
+	if s.Config.AllowInsecureSSL {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	}
 
 	return req

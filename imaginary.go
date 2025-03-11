@@ -27,8 +27,9 @@ var (
 	aGzip               = flag.Bool("gzip", false, "Enable gzip compression (deprecated)")
 	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors") //nolint:lll
 	aEnableURLSource    = flag.Bool("enable-url-source", false, "Enable remote HTTP URL image source processing")
-	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error") //nolint:lll
-	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")  //nolint:lll
+	aAllowInsecureSSL   = flag.Bool("insecure", false, "Allow connections to endpoints with insecure SSL certificates. -enable-url-source flag must be defined. Note: Should only be used in development.") //nolint:lll
+	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")                                                                           //nolint:lll
+	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")                                                                            //nolint:lll
 	aURLSignatureKey    = flag.String("url-signature-key", "", "The URL signature key (32 characters minimum)")
 	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.") //nolint:lll
 	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")                                                                                     //nolint:lll
@@ -89,6 +90,9 @@ Options:
   -http-read-timeout <num>   HTTP read timeout in seconds [default: 30]
   -http-write-timeout <num>  HTTP write timeout in seconds [default: 30]
   -enable-url-source         Enable remote HTTP URL image source processing
+  -insecure                  Allow connections to endpoints with insecure SSL certificates.
+                             -enable-url-source flag must be defined.
+                             Note: Should only be used in development.
   -enable-placeholder        Enable image response placeholder to be used in case of error [default: false]
   -enable-auth-forwarding    Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
   -forward-headers           Forwards custom headers to the image source server. -enable-url-source flag must be defined.
@@ -159,6 +163,7 @@ func createServerOptions(port int, urlSignature URLSignature) ServerOptions {
 		CORS:               *aCors,
 		AuthForwarding:     *aAuthForwarding,
 		EnableURLSource:    *aEnableURLSource,
+		AllowInsecureSSL:   *aAllowInsecureSSL,
 		EnablePlaceholder:  *aEnablePlaceholder,
 		EnableURLSignature: *aEnableURLSignature,
 		URLSignatureKey:    urlSignature.Key,
