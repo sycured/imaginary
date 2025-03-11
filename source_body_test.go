@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -31,7 +30,7 @@ func TestBodyImageSource(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		body, _, err = source.GetImage(r)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -43,7 +42,7 @@ func TestBodyImageSource(t *testing.T) {
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
-	buf, _ := ioutil.ReadFile(fixtureFile)
+	buf, _ := os.ReadFile(fixtureFile)
 	if len(body) != len(buf) {
 		t.Error("Invalid response body")
 	}
@@ -59,7 +58,7 @@ func testReadBody(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		body, _, err = source.GetImage(r)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -71,7 +70,7 @@ func testReadBody(t *testing.T) {
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
-	buf, _ := ioutil.ReadFile(fixtureFile)
+	buf, _ := os.ReadFile(fixtureFile)
 	if len(body) != len(buf) {
 		t.Error("Invalid response body")
 	}

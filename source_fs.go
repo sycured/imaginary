@@ -27,19 +27,19 @@ func (s *FileSystemImageSource) Matches(r *http.Request) bool {
 	return r.Method == http.MethodGet && file != ""
 }
 
-func (s *FileSystemImageSource) GetImage(r *http.Request) ([]byte, error) {
+func (s *FileSystemImageSource) GetImage(r *http.Request) ([]byte, http.Header, error) {
 	file, err := s.getFileParam(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if file == "" {
-		return nil, ErrMissingParamFile
+		return nil, nil, ErrMissingParamFile
 	}
 
 	file, err = s.buildPath(file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return s.read(file)
@@ -53,12 +53,12 @@ func (s *FileSystemImageSource) buildPath(file string) (string, error) {
 	return file, nil
 }
 
-func (s *FileSystemImageSource) read(file string) ([]byte, error) {
+func (s *FileSystemImageSource) read(file string) ([]byte, http.Header, error) {
 	buf, err := os.ReadFile(file) //nolint:gosec
 	if err != nil {
-		return nil, ErrInvalidFilePath
+		return nil, nil, ErrInvalidFilePath
 	}
-	return buf, nil
+	return buf, make(http.Header), nil
 }
 
 func (s *FileSystemImageSource) getFileParam(r *http.Request) (string, error) {

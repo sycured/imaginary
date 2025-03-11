@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 )
 
@@ -15,7 +15,7 @@ func TestHttpImageSource(t *testing.T) {
 	var body []byte
 	var err error
 
-	buf, _ := ioutil.ReadFile(fixtureImage)
+	buf, _ := os.ReadFile(fixtureImage)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(buf)
 	}))
@@ -27,7 +27,7 @@ func TestHttpImageSource(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		body, _, err = source.GetImage(r)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -44,7 +44,7 @@ func TestHttpImageSource(t *testing.T) {
 }
 
 func TestHttpImageSourceAllowedOrigin(t *testing.T) {
-	buf, _ := ioutil.ReadFile(fixtureImage)
+	buf, _ := os.ReadFile(fixtureImage)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(buf)
 	}))
@@ -59,7 +59,7 @@ func TestHttpImageSourceAllowedOrigin(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err := source.GetImage(r)
+		body, _, err := source.GetImage(r)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -85,7 +85,7 @@ func TestHttpImageSourceNotAllowedOrigin(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		_, err := source.GetImage(r)
+		_, _, err := source.GetImage(r)
 		if err == nil {
 			t.Fatal("Error cannot be empty")
 		}
@@ -256,7 +256,7 @@ func TestHttpImageSourceError(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		_, err = source.GetImage(r)
+		_, _, err = source.GetImage(r)
 		if err == nil {
 			t.Fatalf("Server response should not be valid: %s", err)
 		}
@@ -271,7 +271,7 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 	var body []byte
 	var err error
 
-	buf, _ := ioutil.ReadFile(fixture1024Bytes)
+	buf, _ := os.ReadFile(fixture1024Bytes)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(buf)
 	}))
@@ -285,7 +285,7 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		body, _, err = source.GetImage(r)
 		if err == nil {
 			t.Fatalf("It should not allow a request to image exceeding maximum allowed size: %s", err)
 		}
