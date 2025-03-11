@@ -20,6 +20,8 @@ package main
 
 import "testing"
 
+const InvalidParamV = "Invalid param: %#v != %#v"
+
 func TestToMegaBytes(t *testing.T) {
 	tests := []struct {
 		value    uint64
@@ -35,7 +37,7 @@ func TestToMegaBytes(t *testing.T) {
 	for _, test := range tests {
 		val := toMegaBytes(test.value)
 		if val != test.expected {
-			t.Errorf("Invalid param: %#v != %#v", val, test.expected)
+			t.Errorf(InvalidParamV, val, test.expected)
 		}
 	}
 }
@@ -55,7 +57,7 @@ func TestRound(t *testing.T) {
 	for _, test := range tests {
 		val := round(test.value)
 		if val != test.expected {
-			t.Errorf("Invalid param: %#v != %#v", val, test.expected)
+			t.Errorf(InvalidParamV, val, test.expected)
 		}
 	}
 }
@@ -78,7 +80,7 @@ func TestToFixed(t *testing.T) {
 	for _, test := range tests {
 		val := toFixed(test.value, 1)
 		if val != test.expected {
-			t.Errorf("Invalid param: %#v != %#v", val, test.expected)
+			t.Errorf(InvalidParamV, val, test.expected)
 		}
 	}
 }
