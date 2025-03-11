@@ -6,6 +6,8 @@ import (
 	"github.com/h2non/bimg"
 )
 
+const SVG = "svg"
+
 // ExtractImageTypeFromMime returns the MIME image type.
 func ExtractImageTypeFromMime(mime string) string {
 	mime = strings.Split(mime, ";")[0]
@@ -24,7 +26,7 @@ func IsImageMimeTypeSupported(mime string) bool {
 
 	// Some payloads may expose the MIME type for SVG as text/xml
 	if format == "xml" {
-		format = "svg"
+		format = SVG
 	}
 
 	return bimg.IsTypeNameSupported(format)
@@ -43,7 +45,7 @@ func ImageType(name string) bimg.ImageType {
 		return bimg.TIFF
 	case "gif":
 		return bimg.GIF
-	case "svg":
+	case SVG:
 		return bimg.SVG
 	case "pdf":
 		return bimg.PDF
