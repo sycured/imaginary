@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
 
 	"github.com/h2non/bimg"
 )
+
+const MissingHeightWidth = "Missing required param: height or width"
 
 // OperationsMap defines the allowed image transformation operations listed by name.
 // Used for pipeline image processing.
@@ -89,7 +90,7 @@ func Info(buf []byte, o ImageOptions) (Image, error) {
 
 func Resize(buf []byte, o ImageOptions) (Image, error) {
 	if o.Width == 0 && o.Height == 0 {
-		return Image{}, NewError("Missing required param: height or width", http.StatusBadRequest)
+		return Image{}, NewError(MissingHeightWidth, http.StatusBadRequest)
 	}
 
 	opts := BimgOptions(o)
@@ -195,7 +196,7 @@ func Extract(buf []byte, o ImageOptions) (Image, error) {
 
 func Crop(buf []byte, o ImageOptions) (Image, error) {
 	if o.Width == 0 && o.Height == 0 {
-		return Image{}, NewError("Missing required param: height or width", http.StatusBadRequest)
+		return Image{}, NewError(MissingHeightWidth, http.StatusBadRequest)
 	}
 
 	opts := BimgOptions(o)
@@ -205,7 +206,7 @@ func Crop(buf []byte, o ImageOptions) (Image, error) {
 
 func SmartCrop(buf []byte, o ImageOptions) (Image, error) {
 	if o.Width == 0 && o.Height == 0 {
-		return Image{}, NewError("Missing required param: height or width", http.StatusBadRequest)
+		return Image{}, NewError(MissingHeightWidth, http.StatusBadRequest)
 	}
 
 	opts := BimgOptions(o)
@@ -341,7 +342,7 @@ func WatermarkImage(buf []byte, o ImageOptions) (Image, error) {
 
 	bodyReader := io.LimitReader(response.Body, 1e6)
 
-	imageBuf, err := ioutil.ReadAll(bodyReader)
+	imageBuf, err := io.ReadAll(bodyReader)
 	if len(imageBuf) == 0 {
 		errMessage := "Unable to read watermark image"
 
