@@ -25,57 +25,51 @@ import (
 	"testing"
 )
 
-type fakeWriter func([]byte) (int, error)
+// testWriter is a simple writer that stores the output.
+type testWriter struct {
+	buf []byte
+}
 
-func (fake fakeWriter) Write(buf []byte) (int, error) {
-	return fake(buf)
+func (tw *testWriter) Write(b []byte) (int, error) {
+	// In this simple case we simply save the latest write.
+	tw.buf = b
+	return len(b), nil
+}
+
+// setupTest creates the test server with the provided log level and returns a pointer to testWriter.
+func setupTest(t *testing.T, level string) (*httptest.Server, *testWriter) {
+	writer := &testWriter{}
+	// noopHandler is intentionally empty; it serves as a placeholder.
+	noopHandler := func(w http.ResponseWriter, r *http.Request) {}
+	// Create a log handler by wrapping the noop handler.
+	logHandler := NewLog(http.HandlerFunc(noopHandler), writer, level)
+	ts := httptest.NewServer(logHandler)
+	// Ensure the server is closed when the test ends.
+	t.Cleanup(ts.Close)
+	return ts, writer
 }
 
 func TestLogInfo(t *testing.T) {
-	var buf []byte
-	writer := fakeWriter(func(b []byte) (int, error) {
-		buf = b
-		return 0, nil
-	})
-
-	noopHandler := func(w http.ResponseWriter, r *http.Request) {}
-	log := NewLog(http.HandlerFunc(noopHandler), writer, "info")
-
-	ts := httptest.NewServer(log)
-	defer ts.Close()
-
+	ts, writer := setupTest(t, "info")
 	_, err := http.Get(ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	data := string(buf)
-	if strings.Contains(data, http.MethodGet) == false ||
-		strings.Contains(data, "HTTP/1.1") == false ||
-		strings.Contains(data, " 200 ") == false {
+	data := string(writer.buf)
+	if !strings.Contains(data, http.MethodGet) ||
+		!strings.Contains(data, "HTTP/1.1") ||
+		!strings.Contains(data, " 200 ") {
 		t.Fatalf("Invalid log output: %s", data)
 	}
 }
 
 func TestLogError(t *testing.T) {
-	var buf []byte
-	writer := fakeWriter(func(b []byte) (int, error) {
-		buf = b
-		return 0, nil
-	})
-
-	noopHandler := func(w http.ResponseWriter, r *http.Request) {}
-	log := NewLog(http.HandlerFunc(noopHandler), writer, "error")
-
-	ts := httptest.NewServer(log)
-	defer ts.Close()
-
+	ts, writer := setupTest(t, "error")
 	_, err := http.Get(ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	data := string(buf)
+	data := string(writer.buf)
 	if data != "" {
 		t.Fatalf("Invalid log output: %s", data)
 	}
