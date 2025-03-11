@@ -315,6 +315,7 @@ Usage:
   imaginary -path-prefix /api/v1
   imaginary -enable-url-source
   imaginary -disable-endpoints form,health,crop,rotate
+  imaginary -enable-url-source -insecure
   imaginary -enable-url-source -allowed-origins http://localhost,http://server.com,http://*.example.org
   imaginary -enable-url-source -enable-auth-forwarding
   imaginary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
@@ -326,39 +327,43 @@ Usage:
   imaginary -v | -version
 
 Options:
-  -a <addr>                 Bind address [default: *]
-  -p <port>                 Bind port [default: 8088]
-  -h, -help                 Show help
-  -v, -version              Show version
-  -path-prefix <value>      Url path prefix to listen to [default: "/"]
-  -cors                     Enable CORS support [default: false]
-  -gzip                     Enable gzip compression (deprecated) [default: false]
-  -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
-  -key <key>                Define API key for authorization
-  -mount <path>             Mount server local directory
-  -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
-  -http-read-timeout <num>  HTTP read timeout in seconds [default: 60]
-  -http-write-timeout <num> HTTP write timeout in seconds [default: 60]
-  -enable-url-source        Enable remote HTTP URL image source processing (?url=http://..)
-  -enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
-  -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
-  -forward-headers          Forwards custom headers to the image source server. -enable-url-source flag must be defined.
-  -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
-  -url-signature-key        The URL signature key (32 characters minimum)
-  -allowed-origins <urls>   Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.
-  -max-allowed-size <bytes> Restrict maximum size of http image source (in bytes)
+  -a <addr>                            Bind address [default: *]
+  -p <port>                            Bind port [default: 8088]
+  -h, -help                            Show help
+  -v, -version                         Show version
+  -path-prefix <value>                 Url path prefix to listen to [default: "/"]
+  -cors                                Enable CORS support [default: false]
+  -gzip                                Enable gzip compression (deprecated) [default: false]
+  -disable-endpoints                   Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
+  -key <key>                           Define API key for authorization
+  -mount <path>                        Mount server local directory
+  -http-cache-ttl <num>                The TTL in seconds. Adds caching headers to locally served files.
+  -http-read-timeout <num>             HTTP read timeout in seconds [default: 60]
+  -http-write-timeout <num>            HTTP write timeout in seconds [default: 60]
+  -enable-url-source                   Enable remote HTTP URL image source processing (?url=http://..)
+  -insecure                            Allow connections to endpoints with insecure SSL certificates.
+                                       -enable-url-source flag must be defined.
+                                       Note: Should only be used in development.
+  -enable-placeholder                  Enable image response placeholder to be used in case of error [default: false]
+  -enable-auth-forwarding              Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
+  -forward-headers                     Forwards custom headers to the image source server. -enable-url-source flag must be defined.
+  -source-response-headers             Returns selected headers from the source image server response. Has precedence over -http-cache-ttl when cache-control is specified and the source response has a cache-control header, otherwise falls back to -http-cache-ttl value if provided. Missing and/or unlisted response headers are ignored. -enable-url-source flag must be defined.
+  -enable-url-signature                Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
+  -url-signature-key                   The URL signature key (32 characters minimum)
+  -allowed-origins <urls>              Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.
+  -max-allowed-size <bytes>            Restrict maximum size of http image source (in bytes)
   -max-allowed-resolution <megapixels> Restrict maximum resolution of the image [default: 18.0]
-  -certfile <path>          TLS certificate file path
-  -keyfile <path>           TLS private key file path
-  -authorization <value>    Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
-  -placeholder <path>       Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
-  -concurrency <num>        Throttle concurrency limit per second [default: disabled]
-  -burst <num>              Throttle burst max cache size [default: 100]
-  -mrelease <num>           OS memory release interval in seconds [default: 30]
-  -cpus <num>               Number of used cpu cores.
-                            (default for current machine is 8 cores)
-  -log-level                Set log level for http-server. E.g: info,warning,error [default: info].
-                            Or can use the environment variable GOLANG_LOG=info.
+  -certfile <path>                     TLS certificate file path
+  -keyfile <path>                      TLS private key file path
+  -authorization <value>               Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
+  -placeholder <path>                  Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
+  -concurrency <num>                   Throttle concurrency limit per second [default: disabled]
+  -burst <num>                         Throttle burst max cache size [default: 100]
+  -mrelease <num>                      OS memory release interval in seconds [default: 30]
+  -cpus <num>                          Number of used cpu cores.
+                                       (default for current machine is 8 cores)
+  -log-level                           Set log level for http-server. E.g: info,warning,error [default: info].
+                                       Or can use the environment variable GOLANG_LOG=info.
 ```
 
 Start the server in a custom port:
