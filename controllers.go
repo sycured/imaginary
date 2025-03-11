@@ -42,7 +42,7 @@ func indexController(o ServerOptions) func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func healthController(w http.ResponseWriter, r *http.Request) {
+func healthController(w http.ResponseWriter, _ *http.Request) {
 	health := GetHealthStats()
 	body, _ := json.Marshal(health)
 	w.Header().Set(ContentType, ContentTypeJSON)
