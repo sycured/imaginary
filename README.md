@@ -1,5 +1,7 @@
 # imaginary
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sycured_imaginary&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sycured_imaginary) [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=sycured_imaginary&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=sycured_imaginary) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=sycured_imaginary&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=sycured_imaginary)
+
 **[Fast](#benchmarks) HTTP [microservice](http://microservices.io/patterns/microservices.html)** written in Go **for high-level image processing** backed by [bimg](https://github.com/h2non/bimg) and [libvips](https://github.com/jcupitt/libvips). `imaginary` can be used as private or public HTTP service for massive image processing with first-class support for [Docker](#docker) & [Fly.io](#flyio).
 It's almost dependency-free and only uses [`net/http`](http://golang.org/pkg/net/http/) native package without additional abstractions for better [performance](#performance).
 
@@ -233,6 +235,18 @@ In case you are experiencing any persistent unreleased memory issues in your dep
 
 ```bash
 MALLOC_ARENA_MAX=2 imaginary -p 9000 -enable-url-source
+```
+
+### Garbage Collector - GCTUNER
+
+I implemented gctuner with an environment variable to easily tune the threshold coeff.
+
+| environment variable |  default value  |       note       |
+|:--------------------:|:---------------:|:----------------:|
+|   GCTHRESHOLDCOEFF   |       0.7       |  0.7 equals 70%  |
+
+```bash
+GCTHRESHOLDCOEFF=0.3 ./bin/imaginary -p 9000 -enable-url-source
 ```
 
 ### Graceful shutdown
