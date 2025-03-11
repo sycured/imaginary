@@ -14,7 +14,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
   libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev libpng-dev libpoppler-glib-dev \
   librsvg2-dev libtiff5-dev libwebp-dev libxml2-dev swig && \
   cd /tmp && \
-  curl -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
+  curl --proto "=https" --tlsv1.2 -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
   tar zvxf vips-${LIBVIPS_VERSION}.tar.gz && \
   cd /tmp/vips-${LIBVIPS_VERSION} && \
 	CFLAGS="-g -O3" CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0 -g -O3" \
@@ -32,7 +32,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 
 # Installing golangci-lint
 WORKDIR /tmp
-RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
+RUN curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
 
 WORKDIR ${GOPATH}/src/github.com/sycured/imaginary
 
