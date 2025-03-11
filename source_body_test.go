@@ -48,7 +48,7 @@ func TestBodyImageSource(t *testing.T) {
 	}
 }
 
-func testReadBody(t *testing.T) {
+func TestReadBody(t *testing.T) {
 	var body []byte
 	var err error
 
