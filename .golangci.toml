@@ -60,5 +60,7 @@ allow = [
     "github.com/throttled/throttled"
 ]
 
-[linters-settings.revive.rules]
-name = "comment-spacings"
+[linters-settings.revive]
+rules = [
+    { name = "comment-spacings" }
+]

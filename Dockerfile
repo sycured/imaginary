@@ -1,33 +1,17 @@
 ARG GOLANG_VERSION=1.24
-FROM golang:${GOLANG_VERSION}-bullseye AS builder
+FROM golang:${GOLANG_VERSION}-bookworm AS builder
 
 ARG IMAGINARY_VERSION=dev
-ARG LIBVIPS_VERSION=8.16.0
 ARG GOLANGCILINT_VERSION=1.64.6
 
 # Installs libvips + required libraries
-ADD https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz /tmp/vips-${LIBVIPS_VERSION}.tar.xz
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-    automake build-essential ca-certificates curl fftw3-dev gobject-introspection gtk-doc-tools libcfitsio-dev \
-    libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev libjpeg62-turbo-dev \
-    libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev libpng-dev libpoppler-glib-dev \
-    librsvg2-dev libtiff5-dev libwebp-dev libxml2-dev swig && \
-  cd /tmp && \
-  tar vxf vips-${LIBVIPS_VERSION}.tar.xz && \
-  cd /tmp/vips-${LIBVIPS_VERSION} && \
-	CFLAGS="-g -O3" CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0 -g -O3" \
-    ./configure \
-    --disable-debug \
-    --disable-dependency-tracking \
-    --disable-introspection \
-    --disable-static \
-    --enable-gtk-doc-html=no \
-    --enable-gtk-doc=no \
-    --enable-pyvips8=no && \
-  make && make install && ldconfig && \
-  rm -rf vips-${LIBVIPS_VERSION}.tar.xz vips-${LIBVIPS_VERSION}
+    automake build-essential ca-certificates curl libfftw3-dev gobject-introspection gtk-doc-tools \
+    libcfitsio-dev libexif-dev libgif-dev libglib2.0-dev libgsf-1-dev libheif-dev libimagequant-dev \
+    libjpeg62-turbo-dev libmagickwand-dev libmatio-dev libopenslide-dev liborc-0.4-dev libpango1.0-dev \
+    libpng-dev libpoppler-glib-dev librsvg2-dev libtiff5-dev libvips-dev libwebp-dev libxml2-dev swig
 
 # Installing golangci-lint
 WORKDIR /tmp
@@ -60,7 +44,7 @@ RUN go build -a \
     -ldflags="-s -w -h -X main.Version=${IMAGINARY_VERSION}" \
     github.com/sycured/imaginary
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ARG IMAGINARY_VERSION
 
@@ -79,9 +63,9 @@ COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-   fftw3 libcfitsio9 libexif12 libgif7 libglib2.0-0 libgsf-1-114 libheif1 libimagequant0 libjemalloc2 libjpeg62-turbo \
+   libfftw3 libcfitsio9 libexif12 libgif7 libglib2.0-0 libgsf-1-114 libheif1 libimagequant0 libjemalloc2 libjpeg62-turbo \
    libmagickwand-6.q16-6 libmatio11 libopenexr25 libopenslide0 liborc-0.4-0 libpango1.0-0 libpng16-16 libpoppler-glib8 \
-   librsvg2-2 libtiff5 libwebp6 libwebpdemux2 libwebpmux3 libxml2 procps && \
+   librsvg2-2 libtiff5 libvisp42 libwebp6 libwebpdemux2 libwebpmux3 libxml2 procps && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   apt-get autoremove -y && \
   apt-get autoclean && \
