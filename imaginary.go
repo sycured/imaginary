@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -26,23 +25,23 @@ var (
 	aPathPrefix         = flag.String("path-prefix", "/", "Url path prefix to listen to")
 	aCors               = flag.Bool("cors", false, "Enable CORS support")
 	aGzip               = flag.Bool("gzip", false, "Enable gzip compression (deprecated)")
-	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
+	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors") //nolint:lll
 	aEnableURLSource    = flag.Bool("enable-url-source", false, "Enable remote HTTP URL image source processing")
-	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
-	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")
+	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error") //nolint:lll
+	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")  //nolint:lll
 	aURLSignatureKey    = flag.String("url-signature-key", "", "The URL signature key (32 characters minimum)")
-	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.")
-	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
-	aMaxAllowedPixels   = flag.Float64("max-allowed-resolution", 18.0, "Restrict maximum resolution of the image (in megapixels)")
+	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.") //nolint:lll
+	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")                                                                                     //nolint:lll
+	aMaxAllowedPixels   = flag.Float64("max-allowed-resolution", 18.0, "Restrict maximum resolution of the image (in megapixels)")                                                                     //nolint:lll
 	aKey                = flag.String("key", "", "Define API key for authorization")
 	aMount              = flag.String("mount", "", "Mount server local directory")
 	aCertFile           = flag.String("certfile", "", "TLS certificate file path")
 	aKeyFile            = flag.String("keyfile", "", "TLS private key file path")
-	aAuthorization      = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization")
-	aForwardHeaders     = flag.String("forward-headers", "", "Forwards custom headers to the image source server. -enable-url-source flag must be defined.")
-	aPlaceholder        = flag.String("placeholder", "", "Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200")
+	aAuthorization      = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization") //nolint:lll
+	aForwardHeaders     = flag.String("forward-headers", "", "Forwards custom headers to the image source server. -enable-url-source flag must be defined.")                                                                                                                       //nolint:lll
+	aPlaceholder        = flag.String("placeholder", "", "Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200")                                                                                                       //nolint:lll
 	aPlaceholderStatus  = flag.Int("placeholder-status", 0, "HTTP status returned when use -placeholder flag")
-	aDisableEndpoints   = flag.String("disable-endpoints", "", "Comma separated endpoints to disable. E.g: form,crop,rotate,health")
+	aDisableEndpoints   = flag.String("disable-endpoints", "", "Comma separated endpoints to disable. E.g: form,crop,rotate,health") //nolint:lll
 	aHTTPCacheTTL       = flag.Int("http-cache-ttl", -1, "The TTL in seconds")
 	aReadTimeout        = flag.Int("http-read-timeout", 60, "HTTP read timeout in seconds")
 	aWriteTimeout       = flag.Int("http-write-timeout", 60, "HTTP write timeout in seconds")
@@ -54,6 +53,7 @@ var (
 	aReturnSize         = flag.Bool("return-size", false, "Return the image size in the HTTP headers")
 )
 
+//nolint:lll
 const usage = `imaginary %s
 
 Usage:
@@ -135,7 +135,25 @@ func main() {
 	port := getPort(*aPort)
 	urlSignature := getURLSignature(*aURLSignatureKey)
 
-	opts := ServerOptions{
+	opts := createServerOptions(port, urlSignature)
+
+	handleDeprecationWarnings()
+	configureMemoryRelease()
+	validateMountDirectory()
+	validateCacheTTL(opts)
+	managePlaceholderImage(&opts)
+	validateURLSignatureKey(urlSignature, opts)
+
+	debug("imaginary server listening on port :%d/%s", opts.Port, strings.TrimPrefix(opts.PathPrefix, "/"))
+
+	// Load image source providers and start the server
+	LoadSources(opts)
+	Server(opts)
+}
+
+// createServerOptions initializes the ServerOptions
+func createServerOptions(port int, urlSignature URLSignature) ServerOptions {
+	return ServerOptions{
 		Port:               port,
 		Address:            *aAddr,
 		CORS:               *aCors,
@@ -163,36 +181,42 @@ func main() {
 		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
+		Endpoints:          parseEndpoints(*aDisableEndpoints),
 	}
+}
 
-	// Show warning if gzip flag is passed
+// handleDeprecationWarnings handles deprecated flags
+func handleDeprecationWarnings() {
 	if *aGzip {
 		fmt.Println("warning: -gzip flag is deprecated and will not have effect")
 	}
+}
 
-	// Create a memory release goroutine
+// configureMemoryRelease sets up a memory release goroutine if necessary
+func configureMemoryRelease() {
 	if *aMRelease > 0 {
 		memoryRelease(*aMRelease)
 	}
+}
 
-	// Check if the mount directory exists, if present
+// validateMountDirectory checks if the mount directory exists
+func validateMountDirectory() {
 	if *aMount != "" {
 		checkMountDirectory(*aMount)
 	}
+}
 
-	// Validate HTTP cache param, if present
-	if *aHTTPCacheTTL != -1 {
-		checkHTTPCacheTTL(*aHTTPCacheTTL)
+// validateCacheTTL checks the HTTP cache parameter
+func validateCacheTTL(opts ServerOptions) {
+	if opts.HTTPCacheTTL != -1 {
+		checkHTTPCacheTTL(opts.HTTPCacheTTL)
 	}
+}
 
-	// Parse endpoint names to disabled, if present
-	if *aDisableEndpoints != "" {
-		opts.Endpoints = parseEndpoints(*aDisableEndpoints)
-	}
-
-	// Read placeholder image, if required
+// managePlaceholderImage configures the placeholder image
+func managePlaceholderImage(opts *ServerOptions) {
 	if *aPlaceholder != "" {
-		buf, err := ioutil.ReadFile(*aPlaceholder)
+		buf, err := os.ReadFile(*aPlaceholder)
 		if err != nil {
 			exitWithError("cannot start the server: %s", err)
 		}
@@ -203,13 +227,15 @@ func main() {
 		}
 
 		opts.PlaceholderImage = buf
-	} else if *aEnablePlaceholder {
+	} else if opts.EnablePlaceholder {
 		// Expose default placeholder
 		opts.PlaceholderImage = placeholder
 	}
+}
 
-	// Check URL signature key, if required
-	if *aEnableURLSignature {
+// validateURLSignatureKey checks the URL signature key if required
+func validateURLSignatureKey(urlSignature URLSignature, opts ServerOptions) {
+	if opts.EnableURLSignature {
 		if urlSignature.Key == "" {
 			exitWithError("URL signature key is required")
 		}
@@ -218,14 +244,6 @@ func main() {
 			exitWithError("URL signature key must be a minimum of 32 characters")
 		}
 	}
-
-	debug("imaginary server listening on port :%d/%s", opts.Port, strings.TrimPrefix(opts.PathPrefix, "/"))
-
-	// Load image source providers
-	LoadSources(opts)
-
-	// Start the server
-	Server(opts)
 }
 
 func getPort(port int) int {
@@ -301,7 +319,7 @@ func parseForwardHeaders(forwardHeaders string) []string {
 }
 
 func parseOrigins(origins string) []*url.URL {
-	var urls []*url.URL
+	urls := make([]*url.URL, 0, 10)
 	if origins == "" {
 		return urls
 	}
