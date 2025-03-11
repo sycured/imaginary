@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -31,7 +30,7 @@ func TestFileSystemImageSource(t *testing.T) {
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
-	buf, _ := ioutil.ReadFile(fixtureFile)
+	buf, _ := os.ReadFile(fixtureFile)
 	if len(body) != len(buf) {
 		t.Error("Invalid response body")
 	}
