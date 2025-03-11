@@ -1,7 +1,11 @@
 OK_COLOR=\033[32;01m
 NO_COLOR=\033[0m
 
-build:
+lint:
+	@echo "$(OK_COLOR)==> Linting$(NO_COLOR)"
+	golangci-lint run
+
+build: lint
 	@echo "$(OK_COLOR)==> Compiling binary$(NO_COLOR)"
 	go test && go build -o bin/imaginary
 
@@ -24,4 +28,4 @@ docker-push:
 
 docker: docker-build docker-push
 
-.PHONY: test benchmark docker-build docker-push docker
+.PHONY: lint test benchmark docker-build docker-push docker
