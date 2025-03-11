@@ -59,7 +59,9 @@ func sendRequest(t *testing.T, method, url, contentType string, body io.Reader) 
 	if err != nil {
 		t.Fatalf("cannot perform request: %v", err)
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -125,7 +127,9 @@ func runTypeAutoCase(t *testing.T, acceptHeader, expected string) {
 	if err != nil {
 		t.Fatalf("cannot perform request: %v", err)
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	if res.StatusCode != 200 {
 		t.Fatalf(InvalidResponseStatusS, res.Status)
