@@ -52,6 +52,7 @@
 [linters-settings.depguard.rules.main]
 allow = [
     "$gostd",
+    "github.com/bytedance/gopkg",
     "github.com/h2non/bimg",
     "github.com/h2non/filetype",
     "github.com/prometheus/client_golang",
