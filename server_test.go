@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,7 +28,7 @@ func TestIndex(t *testing.T) {
 		t.Fatalf("Invalid response status: %s", res.Status)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +57,7 @@ func TestCrop(t *testing.T) {
 		t.Fatal("Empty content length response")
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +90,7 @@ func TestResize(t *testing.T) {
 		t.Fatalf("Invalid response status: %s", res.Status)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +123,7 @@ func TestEnlarge(t *testing.T) {
 		t.Fatalf("Invalid response status: %s", res.Status)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +156,7 @@ func TestExtract(t *testing.T) {
 		t.Fatalf("Invalid response status: %s", res.Status)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +208,7 @@ func TestTypeAuto(t *testing.T) {
 			t.Fatal("Empty content length response")
 		}
 
-		image, err := ioutil.ReadAll(res.Body)
+		image, err := io.ReadAll(res.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -236,7 +235,7 @@ func TestFit(t *testing.T) {
 	var err error
 
 	buf := readFile("large.jpg")
-	original, _ := ioutil.ReadAll(buf)
+	original, _ := io.ReadAll(buf)
 	err = assertSize(original, 1920, 1080)
 	if err != nil {
 		t.Errorf("Reference image expecations weren't met")
@@ -255,7 +254,7 @@ func TestFit(t *testing.T) {
 		t.Fatalf("Invalid response status: %s", res.Status)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,7 +279,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 	LoadSources(opts)
 
 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		buf, _ := os.ReadFile("testdata/large.jpg")
 		_, _ = w.Write(buf)
 	}))
 	defer tsImage.Close()
@@ -297,7 +296,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 		t.Fatalf("Invalid response status: %d", res.StatusCode)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,7 +354,7 @@ func TestMountDirectory(t *testing.T) {
 		t.Fatalf("Invalid response status: %d", res.StatusCode)
 	}
 
-	image, err := ioutil.ReadAll(res.Body)
+	image, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,7 +406,7 @@ func TestMountInvalidPath(t *testing.T) {
 
 func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		buf, _ := ioutil.ReadAll(r.Body)
+		buf, _ := io.ReadAll(r.Body)
 		imageHandler(w, r, buf, op, ServerOptions{MaxAllowedPixels: 18.0})
 	}
 }
