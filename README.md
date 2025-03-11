@@ -1,4 +1,4 @@
-# imaginary [![Docker](https://img.shields.io/badge/docker-h2non/imaginary-blue.svg)](https://hub.docker.com/r/h2non/imaginary/) [![Docker Registry](https://img.shields.io/docker/pulls/h2non/imaginary.svg)](https://hub.docker.com/r/h2non/imaginary/) [![Fly.io](https://img.shields.io/badge/deploy-fly.io-blue.svg)](https://fly.io/launch/github/h2non/imaginary)
+# imaginary
 
 **[Fast](#benchmarks) HTTP [microservice](http://microservices.io/patterns/microservices.html)** written in Go **for high-level image processing** backed by [bimg](https://github.com/h2non/bimg) and [libvips](https://github.com/jcupitt/libvips). `imaginary` can be used as private or public HTTP service for massive image processing with first-class support for [Docker](#docker) & [Fly.io](#flyio).
 It's almost dependency-free and only uses [`net/http`](http://golang.org/pkg/net/http/) native package without additional abstractions for better [performance](#performance).
@@ -75,12 +75,12 @@ To get started, take a look the [installation](#installation) steps, [usage](#co
 
 - [libvips](https://github.com/jcupitt/libvips) 8.8+ (8.9+ recommended)
 - C compatible compiler such as gcc 4.6+ or clang 3.0+
-- Go 1.12+
+- Go 1.24+
 
 ## Installation
 
 ```bash
-go get -u github.com/h2non/imaginary
+go get -u github.com/sycured/imaginary
 ```
 
 Also, be sure you have the latest version of `bimg`:
@@ -99,46 +99,46 @@ The [install script](https://github.com/h2non/bimg/blob/master/preinstall.sh) re
 
 ### Docker
 
-See [Dockerfile](https://github.com/h2non/imaginary/blob/master/Dockerfile) for image details.
+See [Dockerfile](https://github.com/sycured/imaginary/blob/master/Dockerfile) for image details.
 
 Fetch the image (comes with latest stable Go and `libvips` versions)
-```
-docker pull h2non/imaginary
+```bash
+docker pull sycured/imaginary
 ```
 
 Start the container with optional flags (default listening on port 9000)
-```
-docker run -p 9000:9000 h2non/imaginary -cors
+```bash
+docker run --name imaginary -p 9000:9000 sycured/imaginary -cors
 ```
 
 Start the container enabling remote URL source image processing via GET requests and `url` query param.
-```
-docker run -p 9000:9000 h2non/imaginary -p 9000 -enable-url-source
+```bash
+docker run -p 9000:9000 sycured/imaginary -p 9000 -enable-url-source
 ```
 
 Start the container enabling local directory image process via GET requests and `file` query param.
-```
-docker run -p 9000:9000 h2non/imaginary -p 900 -mount /volume/images
+```bash
+docker run -p 9000:9000 sycured/imaginary -p 900 -mount /volume/images
 ```
 
 Start the container in debug mode:
-```
-docker run -p 9000:9000 -e "DEBUG=*" h2non/imaginary
+```bash
+docker run -p 9000:9000 -e "DEBUG=*" sycured/imaginary
 ```
 
 Enter to the interactive shell in a running container
-```
-sudo docker exec -it <containerIdOrName> bash
+```bash
+docker exec -it imaginary bash
 ```
 
 Stop the container
-```
-docker stop h2non/imaginary
+```bash
+docker stop imaginary
 ```
 
 For more usage examples, see the [command line usage](#command-line-usage).
 
-All Docker images tags are available [here](https://hub.docker.com/r/h2non/imaginary/tags/).
+All Docker images tags are available [here](https://hub.docker.com/r/sycured/imaginary/tags/).
 
 #### Docker Compose
 
@@ -148,7 +148,7 @@ You can add `imaginary` to your `docker-compose.yml` file:
 version: "3"
 services:
   imaginary:
-    image: h2non/imaginary:latest
+    image: sycured/imaginary:latest
     # optionally mount a volume as local image source
     volumes:
       - images:/mnt/data
@@ -182,22 +182,22 @@ You can [learn more](https://fly.io/docs/) about how Fly.io can reduce latency a
 Assuming you have cloudfoundry account, [bluemix](https://console.ng.bluemix.net/) or [pivotal](https://console.run.pivotal.io/) and [command line utility installed](https://github.com/cloudfoundry/cli).
 
 Clone this repository:
-```
-git clone https://github.com/h2non/imaginary.git
+```bash
+git clone https://github.com/sycured/imaginary.git
 ```
 
 Push the application
-```
+```bash
 cf push -b https://github.com/yacloud-io/go-buildpack-imaginary.git imaginary-inst01 --no-start
 ```
 
 Define the library path
-```
+```bash
 cf set-env imaginary-inst01 LD_LIBRARY_PATH /home/vcap/app/vendor/vips/lib
 ```
 
 Start the application
-```
+```bash
 cf start imaginary-inst01
 ```
 
@@ -223,15 +223,15 @@ In production focused environments it's highly recommended to enable the HTTP co
 The recommended concurrency limit per server to guarantee a good performance is up to `20` requests per second.
 
 You can enable it simply passing a flag to the binary:
-```
-$ imaginary -concurrency 20
+```bash
+imaginary -concurrency 20
 ```
 
 ### Memory issues
 
 In case you are experiencing any persistent unreleased memory issues in your deployment, you can try passing this environment variables to `imaginary`:
 
-```
+```bash
 MALLOC_ARENA_MAX=2 imaginary -p 9000 -enable-url-source
 ```
 
@@ -241,8 +241,8 @@ When you use a cluster, it is necessary to control how the deployment is execute
 
 You can use the next command:
 
-```
-$ ps auxw | grep 'bin/imaginary' | awk 'NR>1{print buf}{buf = $2}' | xargs kill -TERM > /dev/null 2>&1
+```bash
+ps auxw | grep 'bin/imaginary' | awk 'NR>1{print buf}{buf = $2}' | xargs kill -TERM > /dev/null 2>&1
 ```
 
 ### Scalability
@@ -284,7 +284,7 @@ Here you can see some performance test comparisons for multiple scenarios:
 
 ## Benchmark
 
-See [benchmark.sh](https://github.com/h2non/imaginary/blob/master/benchmark.sh) for more details
+See [benchmark.sh](https://github.com/sycured/imaginary/blob/master/benchmark.sh) for more details
 
 Environment: Go 1.4.2. libvips-7.42.3. OSX i7 2.7Ghz
 
@@ -372,34 +372,34 @@ PORT=8080 imaginary
 ```
 
 Enable HTTP server throttle strategy (max 10 requests/second):
-```
+```bash
 imaginary -p 8080 -concurrency 10
 ```
 
 Enable remote URL image fetching (then you can do GET request passing the `url=http://server.com/image.jpg` query param):
-```
+```bash
 imaginary -p 8080 -enable-url-source
 ```
 
 Mount local directory (then you can do GET request passing the `file=image.jpg` query param):
-```
+```bash
 imaginary -p 8080 -mount ~/images
 ```
 
 Enable authorization header forwarding to image origin server. `X-Forward-Authorization` or `Authorization` (by priority) header value will be forwarded as `Authorization` header to the target origin server, if one of those headers are present in the incoming HTTP request.
 Security tip: secure your server from public access to prevent attack vectors when enabling this option:
-```
+```bash
 imaginary -p 8080 -enable-url-source -enable-auth-forwarding
 ```
 
 Or alternatively you can manually define an constant Authorization header value that will be always sent when fetching images from remote image origins. If defined, `X-Forward-Authorization` or `Authorization` headers won't be forwarded, and therefore ignored, if present.
 **Note**:
-```
+```bash
 imaginary -p 8080 -enable-url-source -authorization "Bearer s3cr3t"
 ```
 
 Send fixed caching headers in the response. The headers can be set in either "cache nothing" or "cache for N seconds". By specifying `0` imaginary will send the "don't cache" headers, otherwise it sends headers with a TTL. The following example informs the client to cache the result for 1 year:
-```
+```bash
 imaginary -p 8080 -enable-url-source -http-cache-ttl 31556926
 ```
 
@@ -409,63 +409,63 @@ Also, the placeholder image will be also transparently converted to the desired 
 
 This feature is particularly useful when using `imaginary` as public HTTP service consumed by Web clients.
 In case of error, the appropriate HTTP status code will be used to reflect the error, and the error details will be exposed serialized as JSON in the `Error` response HTTP header, for further inspection and convenience for API clients.
-```
+```bash
 imaginary -p 8080 -enable-placeholder -enable-url-source
 ```
 
 You can optionally use a custom placeholder image.
 Since the placeholder image should fit a variety of different sizes, it's recommended to use a large image, such as `1200`x`1200`.
 Supported custom placeholder image types are: `JPEG`, `PNG` and `WEBP`.
-```
+```bash
 imaginary -p 8080 -placeholder=placeholder.jpg -enable-url-source
 ```
 
 Enable URL signature (URL-safe Base64-encoded HMAC digest).
 
 This feature is particularly useful to protect against multiple image operations attacks and to verify the requester identity.
-```
+```bash
 imaginary -p 8080 -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997
 ```
 
 It is recommended to pass key as environment variables:
-```
+```bash
 URL_SIGNATURE_KEY=4f46feebafc4b5e988f131c4ff8b5997 imaginary -p 8080 -enable-url-signature
 ```
 
 Increase libvips threads concurrency (experimental):
-```
+```bash
 VIPS_CONCURRENCY=10 imaginary -p 8080 -concurrency 10
 ```
 
 Enable debug mode:
-```
+```bash
 DEBUG=* imaginary -p 8080
 ```
 
 Or filter debug output by package:
-```
+```bash
 DEBUG=imaginary imaginary -p 8080
 ```
 
 Disable info logs:
-```
+```bash
 GOLANG_LOG=error imaginary -p 8080
 ```
 
 #### Examples
 
 Reading a local image (you must pass the `-mount=<directory>` flag):
-```
+```bash
 curl -O "http://localhost:8088/crop?width=500&height=400&file=foo/bar/image.jpg"
 ```
 
 Fetching the image from a remote server (you must pass the `-enable-url-source` flag):
-```
+```bash
 curl -O "http://localhost:8088/crop?width=500&height=400&url=https://raw.githubusercontent.com/h2non/imaginary/master/testdata/large.jpg"
 ```
 
 Crop behaviour can be influenced with the `gravity` parameter. You can specify a preference for a certain region (north, south, etc.). To enable Smart Crop you can specify the value "smart" to autodetect the most interesting section to consider as center point for the crop operation:
-```
+```bash
 curl -O "http://localhost:8088/crop?width=500&height=200&gravity=smart&url=https://raw.githubusercontent.com/h2non/imaginary/master/testdata/smart-crop.jpg"
 ```
 
@@ -480,15 +480,15 @@ curl -O "http://localhost:8088/crop?width=500&height=200&gravity=smart&url=https
 
 imaginary can be configured to block all requests for images with a src URL this is not specified in the `allowed-origins` list. Imaginary will validate that the remote url matches the hostname and path of at least one origin in allowed list. Perhaps the easiest way to show how this works is to show some examples.
 
-| `allowed-origins` setting | image url | is valid |
-| ------------------------- | --------- | -------- |
-| `-allowed-origins https://s3.amazonaws.com/some-bucket/` | `s3.amazonaws.com/some-bucket/images/image.png` | VALID |
-| `-allowed-origins https://s3.amazonaws.com/some-bucket/` | `s3.amazonaws.com/images/image.png` | NOT VALID (no matching basepath) |
-| `-allowed-origins https://s3.amazonaws.com/some-*` | `s3.amazonaws.com/some-bucket/images/image.png` | VALID |
-| `-allowed-origins https://*.amazonaws.com/some-bucket/` | `anysubdomain.amazonaws.com/some-bucket/images/image.png` | VALID |
-| `-allowed-origins https://*.amazonaws.com` | `anysubdomain.amazonaws.comimages/image.png` | VALID |
-| `-allowed-origins https://*.amazonaws.com` | `www.notaws.comimages/image.png` | NOT VALID (no matching host) |
-| `-allowed-origins https://*.amazonaws.com, foo.amazonaws.com/some-bucket/` | `bar.amazonaws.com/some-other-bucket/image.png` | VALID (matches first condition but not second) |
+| `allowed-origins` setting                                                  | image url                                                 | is valid                                       |
+|----------------------------------------------------------------------------|-----------------------------------------------------------|------------------------------------------------|
+| `-allowed-origins https://s3.amazonaws.com/some-bucket/`                   | `s3.amazonaws.com/some-bucket/images/image.png`           | VALID                                          |
+| `-allowed-origins https://s3.amazonaws.com/some-bucket/`                   | `s3.amazonaws.com/images/image.png`                       | NOT VALID (no matching basepath)               |
+| `-allowed-origins https://s3.amazonaws.com/some-*`                         | `s3.amazonaws.com/some-bucket/images/image.png`           | VALID                                          |
+| `-allowed-origins https://*.amazonaws.com/some-bucket/`                    | `anysubdomain.amazonaws.com/some-bucket/images/image.png` | VALID                                          |
+| `-allowed-origins https://*.amazonaws.com`                                 | `anysubdomain.amazonaws.comimages/image.png`              | VALID                                          |
+| `-allowed-origins https://*.amazonaws.com`                                 | `www.notaws.comimages/image.png`                          | NOT VALID (no matching host)                   |
+| `-allowed-origins https://*.amazonaws.com, foo.amazonaws.com/some-bucket/` | `bar.amazonaws.com/some-other-bucket/image.png`           | VALID (matches first condition but not second) |
 
 ### Authorization
 
@@ -498,7 +498,7 @@ To enable it, you should pass the `-key` flag to the binary.
 API token can be defined as HTTP header (`API-Key`) or query param (`key`).
 
 Example request with API key:
-```
+```http request
 POST /crop HTTP/1.1
 Host: localhost:8088
 API-Key: secret
@@ -511,7 +511,7 @@ The URL signature is provided by the `sign` request parameter.
 The HMAC-SHA256 hash is created by taking the URL path (including the leading /), the request parameters (alphabetically-sorted and concatenated with & into a string). The hash is then base64url-encoded.
 
 Here an example in Go:
-```
+```go
 signKey  := "4f46feebafc4b5e988f131c4ff8b5997"
 urlPath  := "/resize"
 urlQuery := "file=image.jpg&height=200&type=jpeg&width=300"
@@ -536,7 +536,7 @@ Here an example response error when the payload is empty:
 }
 ```
 
-See all the predefined supported errors [here](https://github.com/h2non/imaginary/blob/master/error.go#L19-L28).
+See all the predefined supported errors [here](https://github.com/sycured/imaginary/blob/master/error.go#L19-L28).
 
 #### Placeholder
 
@@ -1280,88 +1280,13 @@ You can ingest Imaginary logs with fluentd using the following fluentd config :
 In the end, access records are tagged with `*.imaginary.access`, and warning /
 error records are tagged with `*.imaginary.error`.
 
-## Support
-
-### Backers
-
-Support us with a monthly donation and help us continue our activities. [[Become a backer](https://opencollective.com/imaginary#backer)]
-
-<a href="https://opencollective.com/imaginary/backer/0/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/0/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/1/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/1/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/2/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/2/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/3/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/3/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/4/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/4/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/5/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/5/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/6/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/6/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/7/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/7/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/8/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/8/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/9/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/9/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/10/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/10/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/11/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/11/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/12/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/12/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/13/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/13/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/14/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/14/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/15/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/15/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/16/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/16/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/17/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/17/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/18/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/18/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/19/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/19/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/20/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/20/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/21/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/21/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/22/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/22/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/23/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/23/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/24/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/24/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/25/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/25/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/26/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/26/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/27/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/27/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/28/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/28/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/backer/29/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/29/avatar.svg"></a>
-
-### Support this project
-
-[![OpenCollective](https://opencollective.com/imaginary/backers/badge.svg)](#backers)
-
-### Sponsors
-
-Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/imaginary#sponsor)]
-
-<a href="https://opencollective.com/imaginary/sponsor/0/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/1/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/2/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/3/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/4/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/5/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/6/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/7/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/8/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/9/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/9/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/10/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/10/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/11/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/11/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/12/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/12/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/13/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/13/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/14/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/14/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/15/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/15/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/16/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/16/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/17/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/17/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/18/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/18/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/19/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/19/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/20/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/20/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/21/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/21/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/22/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/22/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/23/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/23/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/24/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/24/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/25/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/25/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/26/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/26/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/27/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/27/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/28/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/28/avatar.svg"></a>
-<a href="https://opencollective.com/imaginary/sponsor/29/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/29/avatar.svg"></a>
-
 ## Authors
 
-- [Tomás Aparicio](https://github.com/h2non) - Original author and maintainer.
+- [sycured](https://github.com/sycured) - Fork owner
+- [Tomás Aparicio](https://github.com/h2non) - Original author
 
 ## License
 
-MIT - Tomas Aparicio
+AGPL v3 - sycured
 
-[![views](https://sourcegraph.com/api/repos/github.com/h2non/imaginary/.counters/views.svg)](https://sourcegraph.com/github.com/h2non/imaginary)
+[![views](https://sourcegraph.com/api/repos/github.com/sycured/imaginary/.counters/views.svg)](https://sourcegraph.com/github.com/sycured/imaginary)
