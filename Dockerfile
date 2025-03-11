@@ -58,7 +58,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] ; then \
 RUN go build -a \
     -o ${GOPATH}/bin/imaginary \
     -ldflags="-s -w -h -X main.Version=${IMAGINARY_VERSION}" \
-    github.com/h2non/imaginary
+    github.com/sycured/imaginary
 
 FROM debian:bullseye-slim
 
