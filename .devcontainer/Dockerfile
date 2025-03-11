@@ -12,21 +12,17 @@ ARG GOLANGCILINT_VERSION=1.29.0
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  ca-certificates \
-  automake build-essential curl \
-  procps    libopenexr25 libmagickwand-6.q16-6 libpango1.0-0 libmatio11 \
-  libopenslide0 libjemalloc2 gobject-introspection gtk-doc-tools \
-  libglib2.0-0 libglib2.0-dev libjpeg62-turbo libjpeg62-turbo-dev \
-  libpng16-16 libpng-dev libwebp6 libwebpmux3 libwebpdemux2 libwebp-dev \
-  libtiff5 libtiff5-dev libgif7 libgif-dev libexif12 libexif-dev \
-  libxml2 libxml2-dev libpoppler-glib8 libpoppler-glib-dev \
-  swig libmagickwand-dev libpango1.0-dev libmatio-dev libopenslide-dev \
-  libcfitsio9 libcfitsio-dev libgsf-1-114 libgsf-1-dev fftw3 fftw3-dev \
-  liborc-0.4-0 liborc-0.4-dev librsvg2-2 librsvg2-dev libimagequant0 \
-  libimagequant-dev libheif1 libheif-dev && \
+  automake build-essential ca-certificates curl fftw3 fftw3-dev gobject-introspection gtk-doc-tools \
+  libcfitsio-dev libcfitsio9 libexif-dev libexif12 libgif-dev libgif7 libglib2.0-0 libglib2.0-dev \
+  libgsf-1-114 libgsf-1-dev libheif-dev libheif1 libimagequant-dev libimagequant0 libjemalloc2 \
+  libjpeg62-turbo libjpeg62-turbo-dev libmagickwand-6.q16-6 libmagickwand-dev libmatio-dev libmatio11 \
+  libopenexr25 libopenslide-dev libopenslide0 liborc-0.4-0 liborc-0.4-dev libpango1.0-0 libpango1.0-dev\
+  libpng-dev libpng16-16 libpoppler-glib-dev libpoppler-glib8 librsvg2-2 librsvg2-dev libtiff5 \
+  libtiff5-dev libwebp-dev libwebp6 libwebpdemux2 libwebpmux3  libxml2 libxml2-dev procps swig && \
+  rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* && \
   cd /tmp && \
-  curl -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
-  tar zvxf vips-${LIBVIPS_VERSION}.tar.gz && \
+  curl --proto "=https" --tlsv1.2 -fsSLO https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz && \
+  tar vxf vips-${LIBVIPS_VERSION}.tar.gz && \
   cd /tmp/vips-${LIBVIPS_VERSION} && \
 	CFLAGS="-g -O3" CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0 -g -O3" \
     ./configure \
@@ -37,12 +33,11 @@ RUN DEBIAN_FRONTEND=noninteractive \
     --enable-gtk-doc-html=no \
     --enable-gtk-doc=no \
     --enable-pyvips8=no && \
-  make && \
-  make install && \
-  ldconfig
+  make && make install && ldconfig && \
+  cd /tmp && rm -rf vips-${LIBVIPS_VERSION} vips-${LIBVIPS_VERSION}.tar.gz
 
 # Installing golangci-lint
-RUN curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
+RUN curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
 
 # [Optional] Uncomment the next lines to use go get to install anything else you need
 # USER vscode
