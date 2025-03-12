@@ -24,42 +24,70 @@ package main
 import (
 	"bufio"
 	"log"
+	"mime/multipart"
 	"os"
 	"strconv"
 	"strings"
 )
 
-// getMemoryLimit returns the total physical memory of the host.
+// getMemoryLimit returns the memory limit enforced by cgroups if available.
+// It checks the file "/sys/fs/cgroup/memory.max" and, if a valid numeric value is found,
+// returns it as bytes. If the value is "max" (indicating no limit) or any error occurs,
+// it falls back to retrieving the physical memory of the host.
 func getMemoryLimit() int64 {
-	file, err := os.Open("/proc/meminfo")
+	const cgroupMemoryMax = "/sys/fs/cgroup/memory.max"
+
+	data, err := os.ReadFile(cgroupMemoryMax)
+	if err == nil {
+		val := strings.TrimSpace(string(data))
+		// "max" indicates no limit has been enforced.
+		if val != "max" {
+			memBytes, err := strconv.ParseInt(val, 10, 64)
+			if err == nil {
+				return memBytes
+			}
+			log.Printf("Error parsing %q from %s: %v", val, cgroupMemoryMax, err)
+		}
+	} else {
+		log.Printf("Error reading %s: %v", cgroupMemoryMax, err)
+	}
+
+	// Fallback: return the total physical memory of the host.
+	return getPhysicalMemoryLimit()
+}
+
+// getPhysicalMemoryLimit returns the total physical memory of the host in bytes
+// by reading the "/proc/meminfo" file.
+func getPhysicalMemoryLimit() int64 {
+	const procMeminfo = "/proc/meminfo"
+	file, err := os.Open(procMeminfo)
 	if err != nil {
-		log.Printf("Error opening /proc/meminfo: %v", err)
+		log.Printf("Error opening %s: %v", procMeminfo, err)
 		return 0
 	}
-	defer func() {
+
+	defer func(file multipart.File) {
 		_ = file.Close()
-	}()
+	}(file)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		// Look for the line that starts with "MemTotal:"
 		if strings.HasPrefix(line, "MemTotal:") {
 			fields := strings.Fields(line)
 			if len(fields) >= 2 {
-				// The value is provided in kilobytes.
 				memKB, err := strconv.ParseInt(fields[1], 10, 64)
 				if err == nil {
 					return memKB * 1024
 				}
-				log.Printf("Error parsing mem value %q: %v", fields[1], err)
+				log.Printf("Error parsing memory value %q: %v", fields[1], err)
 				return 0
 			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Printf("Error scanning /proc/meminfo: %v", err)
+		log.Printf("Error scanning %s: %v", procMeminfo, err)
 	}
 
 	return 0

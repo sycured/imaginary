@@ -24,7 +24,18 @@
 # To install vegeta: go get github.com/tsenart/vegeta
 #
 #
-set -xeo pipefail
+
+suite=""
+if command -v pewpew 2>&1 >/dev/null
+then
+  suite=suite_pewpew
+elif command -v vegeta 2>&1 >/dev/null
+then
+  suite=suite_vegeta
+else
+  echo "Please install either betwen pewpew or vegeta to run the benchmark"
+  exit 1
+fi
 
 # Default port to listen
 port=8088
@@ -32,18 +43,6 @@ port=8088
 # Start the server
 ./bin/imaginary -p $port &>/dev/null &
 pid=$!
-
-suite=""
-if command -v pewpew 2>&1 >/dev/null
-then
-  suite=suite_pewpew
-elif command -v vegeta if command -v pewpew 2>&1 >/dev/null
-then
-  suite=suite_vegeta
-else
-  echo "Please install either betwen pewpew or vegeta to run the benchmark"
-  exit 1
-fi
 
 suite_pewpew() {
   echo "$1 --------------------------------------"
