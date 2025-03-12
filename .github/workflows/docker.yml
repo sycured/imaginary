@@ -6,6 +6,16 @@ on:
       - "*"
     tags:
       - "*"
+    paths-ignore:
+      - ".dockerignore"
+      - ".github/workflows/**"
+      - ".gitignore"
+      - ".golangci.toml"
+      - "benchmark.sh"
+      - "History.md"
+      - "LICENSE"
+      - "Makefile"
+      - "README.md"
 
 jobs:
   docker:
