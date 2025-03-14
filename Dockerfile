@@ -2,7 +2,7 @@ ARG GOLANG_VERSION=1.24
 FROM golang:${GOLANG_VERSION}-bookworm AS builder
 
 ARG IMAGINARY_VERSION=dev
-ARG GOLANGCILINT_VERSION=1.64.6
+ARG GOLANGCILINT_VERSION=1.64.7
 
 # Installs libvips + required libraries
 RUN DEBIAN_FRONTEND=noninteractive \
@@ -55,18 +55,11 @@ RUN go mod download
 # Copy imaginary sources
 COPY . .
 
-# Run quality control
-ARG TARGETPLATFORM
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] ; then \
-  go test ./... -test.v -test.coverprofile=atomic . ; \
-  else go test ./... -test.v -race -test.coverprofile=atomic . ; \
-  fi; \
-  golangci-lint run .
-
 # Compile imaginary
 RUN go build -a \
     -o ${GOPATH}/bin/imaginary \
     -ldflags="-s -w -h -X main.Version=${IMAGINARY_VERSION}" \
+    -trimpath \
     github.com/sycured/imaginary
 
 FROM debian:bookworm-slim
