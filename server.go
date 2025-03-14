@@ -20,6 +20,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -32,10 +35,14 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 )
 
 type ServerOptions struct {
 	Port               int
+	QUICPort           int
+	QUICPublicPort     int
 	Burst              int
 	Concurrency        int
 	HTTPCacheTTL       int
@@ -84,46 +91,149 @@ func (e Endpoints) IsValid(r *http.Request) bool {
 	return true
 }
 
-func Server(o ServerOptions) {
-	addr := o.Address + ":" + strconv.Itoa(o.Port)
-	handler := NewLog(NewServerMux(o), os.Stdout, o.LogLevel)
+// setupTLSConfig creates and returns the TLS configuration if certificates are provided
+func setupTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+	if certFile == "" || keyFile == "" {
+		return nil, nil
+	}
 
-	server := &http.Server{
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13,
+	}, nil
+}
+
+// createHTTPServer creates an HTTP/HTTPS server with the given handler and options
+func createHTTPServer(addr string, handler http.Handler, o ServerOptions, tlsConfig *tls.Config) *http.Server {
+	srv := &http.Server{
 		Addr:           addr,
-		Handler:        handler,
+		Handler:        altSvcMiddleware(handler, o.QUICPort),
 		MaxHeaderBytes: 1 << 20,
 		ReadTimeout:    time.Duration(o.HTTPReadTimeout) * time.Second,
 		WriteTimeout:   time.Duration(o.HTTPWriteTimeout) * time.Second,
+		TLSConfig:      tlsConfig,
+	}
+	if o.QUICPublicPort != 0 {
+		srv.Handler = altSvcMiddleware(handler, o.QUICPublicPort)
+	} else {
+		srv.Handler = altSvcMiddleware(handler, o.QUICPort)
 	}
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	return srv
+}
 
+// createHTTP3Server creates an HTTP/3 server if TLS is configured
+func createHTTP3Server(quicAddr string, handler http.Handler, tlsConfig *tls.Config, port int, qPP int) *http3.Server {
+	if tlsConfig == nil {
+		return nil
+	}
+
+	h3Server := &http3.Server{
+		Addr:      quicAddr,
+		Handler:   handler,
+		TLSConfig: http3.ConfigureTLSConfig(tlsConfig),
+		QUICConfig: &quic.Config{
+			MaxIdleTimeout: 30 * time.Second,
+			Allow0RTT:      false,
+		},
+	}
+
+	if qPP != 0 {
+		h3Server.Port = qPP
+	} else {
+		h3Server.Port = port
+	}
+	fmt.Println(port)
+	fmt.Println(quicAddr)
+	fmt.Println(qPP)
+	fmt.Println(h3Server.Port)
+	return h3Server
+}
+
+// startHTTPServer starts the HTTP/HTTPS server in a goroutine
+func startHTTPServer(server *http.Server, certFile, keyFile string) {
 	go func() {
-		if err := listenAndServe(server, o); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		var err error
+		if certFile != "" && keyFile != "" {
+			log.Printf("Starting HTTPS server on %s", server.Addr)
+			err = server.ListenAndServeTLS(certFile, keyFile)
+		} else {
+			log.Printf("Starting HTTP server on %s", server.Addr)
+			err = server.ListenAndServe()
+		}
+
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP(S) server error: %s\n", err)
 		}
 	}()
+}
 
+// startHTTP3Server starts the HTTP/3 server in a goroutine if it exists
+func startHTTP3Server(server *http3.Server) {
+	if server == nil {
+		return
+	}
+
+	go func() {
+		log.Printf("Starting HTTP/3 server on %s", server.Addr)
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatalf("HTTP/3 server error: %s\n", err)
+		}
+	}()
+}
+
+// Server sets up and starts the HTTP and HTTP/3 servers
+func Server(o ServerOptions) {
+	addr := o.Address + ":" + strconv.Itoa(o.Port)
+	quicAddr := o.Address + ":" + strconv.Itoa(o.QUICPort)
+
+	// Create the base handler
+	baseHandler := NewLog(NewServerMux(o), os.Stdout, o.LogLevel)
+	handler := baseHandler
+
+	// Setup TLS if certificates are provided
+	tlsConfig, err := setupTLSConfig(o.CertFile, o.KeyFile)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Create servers
+	http3Server := createHTTP3Server(quicAddr, baseHandler, tlsConfig, o.QUICPort, o.QUICPublicPort)
+	httpServer := createHTTPServer(addr, handler, o, tlsConfig)
+
+	// Start servers
+	startHTTPServer(httpServer, o.CertFile, o.KeyFile)
+	startHTTP3Server(http3Server)
+
+	// Setup graceful shutdown
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-done
 	log.Print("Graceful shutdown")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		// extra handling here
-		cancel()
-	}()
+	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
-		log.Panicf("Server Shutdown Failed:%+v", err)
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown failed: %+v", err)
 	}
+
+	log.Print("Server shutdown completed")
 }
 
-func listenAndServe(s *http.Server, o ServerOptions) error {
-	if o.CertFile != "" && o.KeyFile != "" {
-		return s.ListenAndServeTLS(o.CertFile, o.KeyFile)
-	}
-	return s.ListenAndServe()
+func altSvcMiddleware(h http.Handler, quicPort int) http.Handler {
+	// Format with full hostname and port
+	altSvcValue := fmt.Sprintf(`h3=":%d"; ma=2592000`, quicPort)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Alt-Svc", altSvcValue)
+		h.ServeHTTP(w, r)
+	})
 }
 
 func join(o ServerOptions, route string) string {

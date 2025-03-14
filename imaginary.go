@@ -36,7 +36,9 @@ import (
 
 var (
 	aAddr               = flag.String("a", "", "Bind address")
-	aPort               = flag.Int("p", 8088, "Port to listen")
+	aPort               = flag.Int("p", 9000, "Port to listen")
+	aQUICPort           = flag.Int("qp", 1023, "QUIC Port to listen")
+	aQUICPublicPort     = flag.Int("qpp", 0, "QUIC Public Port (port on which the reverse proxy or load-balancer listen")
 	aVers               = flag.Bool("v", false, "Show version")
 	aVersl              = flag.Bool("version", false, "Show version")
 	aHelp               = flag.Bool("h", false, "Show help")
@@ -96,7 +98,9 @@ Usage:
 Options:
 
   -a <addr>                            Bind address [default: *]
-  -p <port>                            Bind port [default: 8088]
+  -p <port>                            Bind port [default: 9000]
+  -qp <port>                           Bind port for QUIC [default: 1023]
+  -qpp <port>													 QUIC Public Port (port on which the reverse proxy or load-balancer listen")
   -h, -help                            Show help
   -v, -version                         Show version
   -path-prefix <value>                 Url path prefix to listen to [default: "/"]
@@ -170,9 +174,12 @@ func main() {
 	gctuner.Tuning(uint64(gcThreshold))
 
 	port := getPort(*aPort)
+	quicPort := getQUICPort(*aQUICPort)
+	quicPublicPort := getQUICPublicPort(*aQUICPublicPort)
+
 	urlSignature := getURLSignature(*aURLSignatureKey)
 
-	opts := createServerOptions(port, urlSignature)
+	opts := createServerOptions(port, quicPort, quicPublicPort, urlSignature)
 
 	handleDeprecationWarnings()
 	configureMemoryRelease()
@@ -189,9 +196,11 @@ func main() {
 }
 
 // createServerOptions initializes the ServerOptions
-func createServerOptions(port int, urlSignature URLSignature) ServerOptions {
+func createServerOptions(port int, quicPort int, quicPublicPort int, urlSignature URLSignature) ServerOptions {
 	return ServerOptions{
 		Port:               port,
+		QUICPort:           quicPort,
+		QUICPublicPort:     quicPublicPort,
 		Address:            *aAddr,
 		CORS:               *aCors,
 		AuthForwarding:     *aAuthForwarding,
@@ -287,6 +296,26 @@ func validateURLSignatureKey(urlSignature URLSignature, opts ServerOptions) {
 
 func getPort(port int) int {
 	if portEnv := os.Getenv("PORT"); portEnv != "" {
+		newPort, _ := strconv.Atoi(portEnv)
+		if newPort > 0 {
+			port = newPort
+		}
+	}
+	return port
+}
+
+func getQUICPort(port int) int {
+	if portEnv := os.Getenv("QUICPORT"); portEnv != "" {
+		newPort, _ := strconv.Atoi(portEnv)
+		if newPort > 0 {
+			port = newPort
+		}
+	}
+	return port
+}
+
+func getQUICPublicPort(port int) int {
+	if portEnv := os.Getenv("QUICPUBLICPORT"); portEnv != "" {
 		newPort, _ := strconv.Atoi(portEnv)
 		if newPort > 0 {
 			port = newPort
