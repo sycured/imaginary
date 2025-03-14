@@ -1,21 +1,14 @@
 name: Docker image
 
 on:
-  push:
-    branches:
-      - "*"
-    tags:
-      - "*"
-    paths-ignore:
-      - ".dockerignore"
-      - ".github/workflows/**"
-      - ".gitignore"
-      - ".golangci.toml"
-      - "benchmark.sh"
-      - "History.md"
-      - "LICENSE"
-      - "Makefile"
-      - "README.md"
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        required: true
+      commit:
+        type: string
+        required: true
 
 jobs:
   docker:
@@ -23,6 +16,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+      - name: Set Docker Tag
+        id: prep
+        run: |
+          DOCKER_TAG=${INPUT_BRANCH//\//-}
+          echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_ENV
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
       - name: Login Docker Hub
         uses: docker/login-action@v2
         with:
@@ -39,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ inputs.commit }}
           restore-keys: |
             ${{ runner.os }}-buildx-
       - name: Build and Push Docker Image
@@ -51,9 +53,9 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           platforms: linux/amd64, linux/arm64, linux/aarch64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/imaginary:${{ github.ref_name }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/imaginary:${{ env.DOCKER_TAG }}
           build-args: |
-            IMAGINARY_VERSION=${{ github.ref_name }}
+            IMAGINARY_VERSION=${{ env.DOCKER_TAG }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
       - name: Verify
