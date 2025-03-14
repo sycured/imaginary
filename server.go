@@ -148,10 +148,7 @@ func createHTTP3Server(quicAddr string, handler http.Handler, tlsConfig *tls.Con
 	} else {
 		h3Server.Port = port
 	}
-	fmt.Println(port)
-	fmt.Println(quicAddr)
-	fmt.Println(qPP)
-	fmt.Println(h3Server.Port)
+
 	return h3Server
 }
 
