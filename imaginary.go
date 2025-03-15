@@ -100,7 +100,7 @@ Options:
   -a <addr>                            Bind address [default: *]
   -p <port>                            Bind port [default: 9000]
   -qp <port>                           Bind port for QUIC [default: 1023]
-  -qpp <port>													 QUIC Public Port (port on which the reverse proxy or load-balancer listen")
+  -qpp <port>                          QUIC Public Port (port on which the reverse proxy or load-balancer listen")
   -h, -help                            Show help
   -v, -version                         Show version
   -path-prefix <value>                 Url path prefix to listen to [default: "/"]

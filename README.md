@@ -329,8 +329,7 @@ Usage:
   imaginary -path-prefix /api/v1
   imaginary -enable-url-source
   imaginary -disable-endpoints form,health,crop,rotate
-  imaginary -enable-url-source -insecure
-  imaginary -enable-url-source -allowed-origins http://localhost,http://server.com,http://*.example.org
+  imaginary -enable-url-source -allowed-origins http://localhost,http://server.com
   imaginary -enable-url-source -enable-auth-forwarding
   imaginary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
   imaginary -enable-placeholder
@@ -341,8 +340,11 @@ Usage:
   imaginary -v | -version
 
 Options:
+
   -a <addr>                            Bind address [default: *]
-  -p <port>                            Bind port [default: 8088]
+  -p <port>                            Bind port [default: 9000]
+  -qp <port>                           Bind port for QUIC [default: 1023]
+  -qpp <port>                          QUIC Public Port (port on which the reverse proxy or load-balancer listen")
   -h, -help                            Show help
   -v, -version                         Show version
   -path-prefix <value>                 Url path prefix to listen to [default: "/"]
@@ -352,9 +354,9 @@ Options:
   -key <key>                           Define API key for authorization
   -mount <path>                        Mount server local directory
   -http-cache-ttl <num>                The TTL in seconds. Adds caching headers to locally served files.
-  -http-read-timeout <num>             HTTP read timeout in seconds [default: 60]
-  -http-write-timeout <num>            HTTP write timeout in seconds [default: 60]
-  -enable-url-source                   Enable remote HTTP URL image source processing (?url=http://..)
+  -http-read-timeout <num>             HTTP read timeout in seconds [default: 30]
+  -http-write-timeout <num>            HTTP write timeout in seconds [default: 30]
+  -enable-url-source                   Enable remote HTTP URL image source processing
   -insecure                            Allow connections to endpoints with insecure SSL certificates.
                                        -enable-url-source flag must be defined.
                                        Note: Should only be used in development.
@@ -364,20 +366,22 @@ Options:
   -source-response-headers             Returns selected headers from the source image server response. Has precedence over -http-cache-ttl when cache-control is specified and the source response has a cache-control header, otherwise falls back to -http-cache-ttl value if provided. Missing and/or unlisted response headers are ignored. -enable-url-source flag must be defined.
   -enable-url-signature                Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
   -url-signature-key                   The URL signature key (32 characters minimum)
-  -allowed-origins <urls>              Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.
+  -allowed-origins <urls>              Restrict remote image source processing to certain origins (separated by commas)
   -max-allowed-size <bytes>            Restrict maximum size of http image source (in bytes)
   -max-allowed-resolution <megapixels> Restrict maximum resolution of the image [default: 18.0]
   -certfile <path>                     TLS certificate file path
   -keyfile <path>                      TLS private key file path
   -authorization <value>               Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
   -placeholder <path>                  Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
+  -placeholder-status <code>           HTTP status returned when use -placeholder flag
   -concurrency <num>                   Throttle concurrency limit per second [default: disabled]
   -burst <num>                         Throttle burst max cache size [default: 100]
   -mrelease <num>                      OS memory release interval in seconds [default: 30]
   -cpus <num>                          Number of used cpu cores.
-                                       (default for current machine is 8 cores)
+                                       (default for current machine is 4 cores)
   -log-level                           Set log level for http-server. E.g: info,warning,error [default: info].
                                        Or can use the environment variable GOLANG_LOG=info.
+  -return-size                         Return the image size with X-Width and X-Height HTTP header. [default: disabled].
 ```
 
 Start the server in a custom port:
@@ -471,7 +475,7 @@ Disable info logs:
 GOLANG_LOG=error imaginary -p 8080
 ```
 
-#### Examples
+### Examples
 
 Reading a local image (you must pass the `-mount=<directory>` flag):
 ```bash
@@ -489,9 +493,32 @@ curl -O "http://localhost:8088/crop?width=500&height=200&gravity=smart&url=https
 ```
 
 
-#### Playground
+### Playground
 
 `imaginary` exposes an ugly HTML form for playground purposes in: [`http://localhost:8088/form`](http://localhost:8088/form)
+
+## TLS
+
+### Configuration
+
+To enable TLS, provide the certificate and key file paths via the command-line, for example:
+
+```bash
+imaginary -certfile certificate.pem -keyfile certificate.key
+```
+
+When the server starts, you should see output similar to:
+
+```bash
+2025/03/15 00:21:45 Starting HTTPS server on :9000
+2025/03/15 00:21:45 Starting HTTP/3 server on :1023
+```
+
+**Note:** If you're using an L4 load balancer, specify the public port for QUIC with the `-qpp <port>` flag. For instance:
+
+```bash
+imaginary -certfile certificate.pem -keyfile certificate.key -qpp 444
+```
 
 ## HTTP API
 
