@@ -38,10 +38,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
     libxml2-dev \
     swig
 
-# Installing golangci-lint
-WORKDIR /tmp
-RUN curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION}
-
 WORKDIR ${GOPATH}/src/github.com/sycured/imaginary
 
 # Cache go modules
