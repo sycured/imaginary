@@ -4,7 +4,7 @@ module github.com/sycured/imaginary
 go 1.24
 
 require (
-	github.com/bytedance/gopkg v0.1.1
+	github.com/bytedance/gopkg v0.1.2
 	github.com/h2non/bimg v1.1.9
 	github.com/h2non/filetype v1.1.3
 	github.com/prometheus/client_golang v1.21.1
