@@ -11,7 +11,7 @@ require (
 	github.com/quic-go/quic-go v0.50.1
 	github.com/rs/cors v1.11.1
 	github.com/throttled/throttled/v2 v2.13.0
-	golang.org/x/sys v0.31.0
+	golang.org/x/sys v0.32.0
 )
 
 require (
