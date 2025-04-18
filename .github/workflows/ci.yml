@@ -16,6 +16,7 @@ on:
       - "LICENSE"
       - "Makefile"
       - "README.md"
+      - "SECURITY.md"
 
 permissions:
   contents: read
