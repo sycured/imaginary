@@ -1,68 +1,82 @@
+version = '2'
+
 [run]
-    concurrency = 4
-    tests = false
-
-[linters-settings]
-    [linters-settings.gocyclo]
-        min-complexity = 20
-
-    [linters-settings.goconst]
-        min-len = 2
-        min-occurrences = 2
-
-    [linters-settings.misspell]
-        locale = "US"
-
-[issues]
-    exclude-use-default = false
+concurrency = 4
+tests = false
 
 [linters]
-    # White-listing, to be more CI safe.
-    disable-all = true
-
-    # @see https://github.com/golangci/golangci-lint#enabled-by-default-linters
-    enable = [
-        "copyloopvar",
-        "dupl",
-        "depguard",
-        "errcheck",
-        "ginkgolinter",
-        "goconst",
-        "gocyclo",
-        "gofmt",
-        "gocritic",
-        "goimports",
-        "gosec",
-        "gosimple",
-        "govet",
-        "ineffassign",
-        "lll",
-        "misspell",
-        "nakedret",
-        "prealloc",
-        "revive",
-        "staticcheck",
-        "stylecheck",
-        "typecheck",
-        "unconvert",
-        "unparam",
-        "unused",
-    ]
-
-[linters-settings.depguard.rules.main]
-allow = [
-    "$gostd",
-    "github.com/bytedance/gopkg",
-    "github.com/h2non/bimg",
-    "github.com/h2non/filetype",
-    "github.com/prometheus/client_golang",
-    "github.com/quic-go/quic-go",
-    "github.com/rs/cors",
-    "github.com/throttled/throttled",
-    "golang.org/x/sys/unix"
+default = 'none'
+enable = [
+  'copyloopvar',
+  'depguard',
+  'dupl',
+  'errcheck',
+  'ginkgolinter',
+  'goconst',
+  'gocritic',
+  'gocyclo',
+  'gosec',
+  'govet',
+  'ineffassign',
+  'lll',
+  'misspell',
+  'nakedret',
+  'prealloc',
+  'revive',
+  'staticcheck',
+  'unconvert',
+  'unparam',
+  'unused'
 ]
 
-[linters-settings.revive]
-rules = [
-    { name = "comment-spacings" }
+[linters.settings]
+[linters.settings.depguard]
+[linters.settings.depguard.rules]
+[linters.settings.depguard.rules.main]
+allow = [
+  '$gostd',
+  'github.com/bytedance/gopkg',
+  'github.com/h2non/bimg',
+  'github.com/h2non/filetype',
+  'github.com/prometheus/client_golang',
+  'github.com/quic-go/quic-go',
+  'github.com/rs/cors',
+  'github.com/throttled/throttled',
+  'golang.org/x/sys/unix'
+]
+
+[linters.settings.goconst]
+min-len = 2
+min-occurrences = 2
+
+[linters.settings.gocyclo]
+min-complexity = 20
+
+[linters.settings.misspell]
+locale = 'US'
+
+[linters.settings.revive]
+[[linters.settings.revive.rules]]
+name = 'comment-spacings'
+
+[linters.exclusions]
+generated = 'lax'
+paths = [
+  'third_party$',
+  'builtin$',
+  'examples$'
+]
+
+[formatters]
+enable = [
+  'gofmt',
+  'goimports'
+]
+
+[formatters.exclusions]
+generated = 'lax'
+paths = [
+  'third_party$',
+  'builtin$',
+  'examples$'
 ]
