@@ -43,7 +43,7 @@ jobs:
         with:
           platforms: all
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@f211e3e9ded2d9377c8cadc4489a4e38014bc4c9 # v1.7.0
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
         id: buildx
       - name: Cache Docker Image Layers
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
