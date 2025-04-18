@@ -365,7 +365,7 @@ func coerceInterlace(io *ImageOptions, param interface{}) (err error) {
 
 func coercePalette(io *ImageOptions, param interface{}) (err error) {
 	io.Palette, err = coerceTypeBool(param)
-	io.IsDefinedField.Palette = true
+	io.Palette = true
 	return err
 }
 
