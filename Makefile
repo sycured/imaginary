@@ -13,6 +13,22 @@ test:
 	@echo "$(OK_COLOR)==> Testing$(NO_COLOR)"
 	@go test
 
+fuzzing15s:
+	@echo "$(OK_COLOR)==> Fuzzing: 90 seconds$(NO_COLOR)"
+	@./run-fuzz-tests.sh 15s
+
+fuzzing90s:
+	@echo "$(OK_COLOR)==> Fuzzing: 90 seconds$(NO_COLOR)"
+	@./run-fuzz-tests.sh 90s
+
+fuzzing5m:
+	@echo "$(OK_COLOR)==> Fuzzing: 5 minutes$(NO_COLOR)"
+	@./run-fuzz-tests.sh 5m
+
+fuzzing1h:
+	@echo "$(OK_COLOR)==> Fuzzing: 1 hour$(NO_COLOR)"
+	@./run-fuzz-tests.sh 1h
+
 install:
 	go get -u .
 
