@@ -180,6 +180,7 @@ jobs:
 
   docker:
     needs:
+      - fuzz
       - lint
       - test
     uses: ./.github/workflows/docker.yml
