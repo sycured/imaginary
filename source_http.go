@@ -119,7 +119,11 @@ func (s *HTTPImageSource) setForwardHeaders(req *http.Request, ireq *http.Reques
 }
 
 func parseURL(request *http.Request) (*url.URL, error) {
-	return url.Parse(request.URL.Query().Get(URLQueryKey))
+	urlParam := request.URL.Query().Get(URLQueryKey)
+	if urlParam == "" {
+		return nil, fmt.Errorf("empty URL parameter")
+	}
+	return url.Parse(urlParam)
 }
 
 func newHTTPRequest(s *HTTPImageSource, ireq *http.Request, method string, url *url.URL) *http.Request {
