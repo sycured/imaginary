@@ -180,5 +180,4 @@ func TestCalculateDestinationFitDimension(t *testing.T) {
 			)
 		}
 	}
-
 }
