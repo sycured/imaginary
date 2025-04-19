@@ -140,14 +140,14 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		return
 	}
 
-	if err := validateImageSize(buf, o); err != nil {
-		ErrorReply(r, w, NewError(err.Error(), http.StatusBadRequest), o)
+	if sizeErr := validateImageSize(buf, o); sizeErr != nil {
+		ErrorReply(r, w, NewError(sizeErr.Error(), http.StatusBadRequest), o)
 		return
 	}
 
-	image, err := operation.Run(buf, opts)
-	if err != nil {
-		handleProcessingError(w, r, vary, err, o)
+	image, operationErr := operation.Run(buf, opts)
+	if operationErr != nil {
+		handleProcessingError(w, r, vary, operationErr, o)
 		return
 	}
 
