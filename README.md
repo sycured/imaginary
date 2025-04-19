@@ -23,6 +23,7 @@ To get started, take a look the [installation](#installation) steps, [usage](#co
 
 ## Contents
 
+- [Contributing](#contributing)
 - [Supported image operations](#supported-image-operations)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -48,6 +49,18 @@ To get started, take a look the [installation](#installation) steps, [usage](#co
   - [Fluentd log ingestion](#fluentd-log-ingestion)
 - [Authors](#authors)
 - [License](#license)
+
+## Contributing
+
+You're welcome to contribute to `imaginary` project!
+
+A quick guideline to get started:
+- Pull Requests with all tests passing
+- The styling is enforced using `gofmt` and `golangci-lint`
+- Don't forget the License header present in all `.go` files
+- Avoid duplications
+- Write tests
+- Write documentation
 
 ## Supported image operations
 
