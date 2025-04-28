@@ -1,3 +1,21 @@
+2.0.0 / 2025-03-15
+==================
+
+  * HTTP/3 & QUIC Integration (#2)
+  * Docker & CI Enhancements:
+    * Improved Dockerfiles by removing unused steps and updating build sources
+    * Added new workflows and linting steps to streamline the CI process
+  * Dependency Updates:
+    * Bumped key dependencies (e.g., golang.org/x/net from 0.33.0 to 0.36.0) and added new ones like quic-go
+    * Replaced deprecated packages (e.g., ioutil with os/io)
+  * Testing & Code Refactoring:
+    Consolidated and optimized test cases for better readability and maintainability, and refactored various parts of the codebase to enhance clarity and error handling.
+  * Metrics & Performance:
+    * Added support for Prometheus metrics
+    * Added support for a new benchmarking tool: [pewpew](https://github.com/bengadbois/pewpew)
+  * License Update:
+    BREAKING CHANGE: Updated the project license from MIT to AGPLv3, along with necessary repository and reference changes.
+
 
 1.2.4 / 2020-08-12
 ==================
