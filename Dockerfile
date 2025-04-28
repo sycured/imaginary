@@ -30,7 +30,7 @@ RUN go build -a \
     github.com/sycured/imaginary
 
 
-FROM cgr.dev/chainguard/wolfi-base:latest
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:e1d402d624011d0f4439bfb0d46a3ddc692465103c7234a326e0194953c3cfe0
 
 ARG IMAGINARY_VERSION
 
