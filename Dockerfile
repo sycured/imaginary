@@ -41,7 +41,7 @@ LABEL maintainer="60801403+sycured@users.noreply.github.com" \
       org.label-schema.vcs-url="https://github.com/sycured/imaginary" \
       org.label-schema.version="${IMAGINARY_VERSION}"
 
-COPY --from=builder --chown=nobody:nobody /go/bin/imaginary /usr/local/bin/imaginary
+COPY --from=builder --chown=root:root --chmod=755 /go/bin/imaginary /usr/local/bin/imaginary
 
 # Install runtime dependencies
 RUN apk upgrade --no-cache --no-interactive \
