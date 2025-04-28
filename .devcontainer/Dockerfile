@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:1.24.2-alpine3.21@sha256:7772cb5322baa875edd74705556d08f0eeca7b9c4b5367754ce3f2f00041ccee
 ARG GOLANGCILINT_VERSION=2.1.5
 ARG VEGETA_VERSION=12.12.0
 
@@ -7,7 +7,14 @@ ENV GO111MODULE=on
 
 RUN addgroup -g 1000 nonroot \
     && adduser -u 1000 -G nonroot -D nonroot \
-    && apk add --no-cache ca-certificates bash build-base curl git make vips-dev pkgconf \
+    && apk add --no-cache \
+        bash=5.2.37-r0 \
+        build-base=0.5-r3 \
+        ca-certificates=20241121-r1 \
+        curl=8.12.1-r1 \
+        git=2.47.2-r0 \
+        pkgconf=2.3.0-r0 \
+        vips-dev=8.15.3-r5 \
     && curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v${GOLANGCILINT_VERSION} \
     && cpuarch=$(uname -m) \
     && [[ $cpuarch == x86_64 ]] && vegeta_arch=amd64 || vegeta_arch=arm \
