@@ -37,6 +37,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
+	"github.com/swaggo/http-swagger"
+	_ "github.com/sycured/imaginary/docs"
 )
 
 type ServerOptions struct {
@@ -253,7 +255,8 @@ func NewServerMux(o ServerOptions) http.Handler {
 	mux.Handle(join(o, "/"), Middleware(indexController(o), o))
 	mux.Handle(join(o, "/form"), Middleware(formController(o), o))
 	mux.Handle(join(o, "/health"), Middleware(healthController, o))
-	mux.Handle(join(o, "/metrics"), promhttp.Handler())
+	mux.Handle(join(o, "/metrics"), metricsHandler())
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	image := ImageMiddleware(o)
 	mux.Handle(join(o, "/resize"), image(Resize))

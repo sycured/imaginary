@@ -9,6 +9,9 @@ build: lint test
 	@echo "$(OK_COLOR)==> Compiling binary$(NO_COLOR)"
 	@go build -ldflags '-s -w' -trimpath -o bin/imaginary
 
+generate-docs:
+	@go generate
+
 test:
 	@echo "$(OK_COLOR)==> Testing$(NO_COLOR)"
 	@go test
