@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#
 # SPDX-License-Identifier: AGPL-3.0-only
 #
 # Copyright (c) 2025 sycured
@@ -15,6 +16,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 
 FUZZ_TIME=${1:-90s}
 
