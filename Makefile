@@ -48,4 +48,4 @@ docker-push:
 
 docker: docker-build docker-push
 
-.PHONY: lint test benchmark docker-build docker-push docker
+.PHONY: lint build generate-docs test fuzzing15s fuzzing90s fuzzing5m fuzzing1h install benchmark docker-build docker-push docker
