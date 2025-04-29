@@ -144,6 +144,14 @@ type URLSignature struct {
 	Key string
 }
 
+// @title Imaginary
+// @description Imaginary is a fast HTTP microservice for high-level image processing
+// @version 2.0.0
+// @license.name AGPL-3.0-only
+// @license.url https://www.gnu.org/licenses/agpl-3.0.html
+// @BasePath /
+//
+//go:generate swag init --ot go -g imaginary.go
 func main() {
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(os.Stderr, usage, Version, runtime.NumCPU())

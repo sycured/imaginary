@@ -223,6 +223,15 @@ func Server(o ServerOptions) {
 	log.Print("Server shutdown completed")
 }
 
+// @Summary Prometheus metrics
+// @Description Returns Prometheus metrics for monitoring
+// @Produce text/plain
+// @Success 200 {string} string "Prometheus metrics"
+// @Router /metrics [get]
+func metricsHandler() http.Handler {
+	return promhttp.Handler()
+}
+
 func altSvcMiddleware(h http.Handler, quicPort int) http.Handler {
 	// Format with full hostname and port
 	altSvcValue := fmt.Sprintf(`h3=":%d"; ma=2592000`, quicPort)

@@ -45,6 +45,11 @@ const (
 	WebP            = "webp"
 )
 
+// @Summary Index page
+// @Description Returns information about the service
+// @Produce json
+// @Success 200 {object} Versions
+// @Router / [get]
 func indexController(o ServerOptions) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != path.Join(o.PathPrefix, "/") {
@@ -62,6 +67,11 @@ func indexController(o ServerOptions) func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// @Summary Health check
+// @Description Returns the health status of the service
+// @Produce json
+// @Success 200 {object} HealthStats
+// @Router /health [get]
 func healthController(w http.ResponseWriter, _ *http.Request) {
 	health := GetHealthStats()
 	body, _ := json.Marshal(health)
@@ -69,6 +79,7 @@ func healthController(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(body)
 }
 
+// imageController is a generic handler for image processing operations
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var imageSource = MatchSource(req)
@@ -223,6 +234,10 @@ func sendResponse(w http.ResponseWriter, image Image, vary string, o ServerOptio
 	_, _ = w.Write(image.Body)
 }
 
+// @Summary HTML form for image processing
+// @Description Returns an HTML form for uploading and processing images
+// @Produce html
+// @Router /form [get]
 func formController(o ServerOptions) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		operations := []struct {
