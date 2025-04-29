@@ -59,7 +59,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64, linux/arm64, linux/aarch64
+          platforms: linux/amd64, linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/imaginary:${{ env.DOCKER_TAG }}
           build-args: |
