@@ -9,6 +9,13 @@ on:
       - "*"
     paths-ignore:
       - ".dockerignore"
+      - ".github/CODEOWNERS"
+      - ".github/dependabot.yml"
+      - ".github/workflows/clean-old-runs.yml"
+      - ".github/workflows/codeql.yml"
+      - ".github/workflows/dependency-review.yml"
+      - ".github/workflows/docker.yml"
+      - ".github/workflows/scorecard.yml"
       - ".gitignore"
       - ".golangci.toml"
       - "benchmark.sh"
