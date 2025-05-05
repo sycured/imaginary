@@ -2,6 +2,8 @@ name: Delete old workflow runs
 on:
   schedule:
     - cron: '0 3 * * 1'
+permissions:
+  contents: read
 jobs:
   del_runs:
     runs-on: ubuntu-latest
@@ -9,8 +11,12 @@ jobs:
       actions: write
       contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
       - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
+        uses: Mattraks/delete-workflow-runs@4c9f24749b7996562658e3d6e10662489e22caca # v2
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
