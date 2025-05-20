@@ -8,7 +8,7 @@ require (
 	github.com/h2non/bimg v1.1.9
 	github.com/h2non/filetype v1.1.3
 	github.com/prometheus/client_golang v1.22.0
-	github.com/quic-go/quic-go v0.51.0
+	github.com/quic-go/quic-go v0.52.0
 	github.com/rs/cors v1.11.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.4
