@@ -9,18 +9,34 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    groups:
+      gomod:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: /.devcontainer
     schedule:
       interval: daily
+    groups:
+      docker:
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
+    groups:
+      docker:
+        patterns:
+          - "*"
