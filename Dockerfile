@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/go:latest-dev@sha256:e939ec60cb7c9e408eff3d4298310720b1cf91551a3aa21cf555750082ed1de9 AS builder
+FROM cgr.dev/chainguard/go:latest-dev@sha256:eb0415336f1423ca22e58ca35fe5feae58f7d16e3b2256e71012e52e145998f8 AS builder
 
 ENV GOPATH=/go
 
@@ -30,7 +30,7 @@ RUN go build -a \
     github.com/sycured/imaginary
 
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:cb5d1d9d5d562191f7f1c37c2ee21e8a9cdf3d25bf1faa4ac10ee375597ef9db
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:57428116d2d7c27d1d4de4103e19b40bb8d2942ff6dff31b900e55efedeb7e30
 
 ARG IMAGINARY_VERSION
 
