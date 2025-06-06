@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/go:latest-dev@sha256:abd11d5d7b895d63b60b0aa0a8be84ea363a2b892d5e9f59c8528ca16b913e17 AS builder
+FROM cgr.dev/chainguard/go:latest-dev@sha256:49786768094b49794f9f2988e329fdaf6b87ce0d6f0ea137a1e1705787fad916 AS builder
 
 ENV GOPATH=/go
 
