@@ -165,11 +165,20 @@ func main() {
 		showVersion()
 	}
 
-	memoryLimit := getMemoryLimit()
-	if memoryLimit == 0 {
-		log.Panicf("Failed to determine host memory limit")
-		return
-	}
+	memoryLimit := func() int64 {
+		mem, err := getUnikernelMemory()
+		if strings.HasPrefix(err.Error(), "FAIL") {
+			log.Fatalln(err)
+		}
+		if mem == 0 {
+			value, err := getMemoryLimit()
+			if err != nil {
+				log.Fatalln(err.Error())
+			}
+			mem = value
+		}
+		return mem
+	}()
 
 	var gcThresholdCoeff = 0.7
 	if val, ok := os.LookupEnv("GCTHRESHOLDCOEFF"); ok && val != "" {
