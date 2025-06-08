@@ -279,6 +279,14 @@ I implemented gctuner with an environment variable to easily tune the threshold 
 GCTHRESHOLDCOEFF=0.3 ./bin/imaginary -p 9000 -enable-url-source
 ```
 
+### Unikernel Memory
+
+To specify Unikernel Memory, you can use the following environment variable:
+
+```bash
+UNIKERNEL_MEMORY=512MB ./bin/imaginary -p 9000 -enable-url-source
+```
+
 ### Graceful shutdown
 
 When you use a cluster, it is necessary to control how the deployment is executed, and it is very useful to finish the containers in a controlled manner.
