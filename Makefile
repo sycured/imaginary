@@ -17,7 +17,7 @@ test:
 	@go test
 
 fuzzing15s:
-	@echo "$(OK_COLOR)==> Fuzzing: 90 seconds$(NO_COLOR)"
+	@echo "$(OK_COLOR)==> Fuzzing: 15 seconds$(NO_COLOR)"
 	@./run-fuzz-tests.sh 15s
 
 fuzzing90s:
