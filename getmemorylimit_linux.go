@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 /*
  * SPDX-License-Identifier: AGPL-3.0-only
  *
@@ -30,11 +27,9 @@ import (
 	"strings"
 )
 
-// getMemoryLimit returns the memory limit enforced by cgroups if available.
-// It checks the file "/sys/fs/cgroup/memory.max" and, if a valid numeric value is found,
-// returns it as bytes. If the value is "max" (indicating no limit) or any error occurs,
-// it falls back to retrieving the physical memory of the host.
-func getMemoryLimit() int64 {
+// getMemoryLimit returns the memory limit enforced by cgroups if available,
+// or falls back to retrieving the physical memory of the host if no limit is found.
+func getMemoryLimit() (int64, error) {
 	const cgroupMemoryMax = "/sys/fs/cgroup/memory.max"
 
 	data, err := os.ReadFile(cgroupMemoryMax)
@@ -44,26 +39,27 @@ func getMemoryLimit() int64 {
 		if val != "max" {
 			memBytes, err := strconv.ParseInt(val, 10, 64)
 			if err == nil {
-				return memBytes
+				return int64(memBytes), nil
 			}
-			log.Printf("Error parsing %q from %s: %v", val, cgroupMemoryMax, err)
+			fmt.Errorf("Error reading %s: %v", cgroupMemoryMax, err)
 		}
 	} else {
-		log.Printf("Error reading %s: %v", cgroupMemoryMax, err)
+		// Fallback: retrieve the total physical memory of the host.
+		memLimit, err := getPhysicalMemoryLimit()
+		if err == nil {
+			return memLimit, nil
+		}
+		return 0, fmt.Errorf("Failed to determine memory limit")
 	}
-
-	// Fallback: return the total physical memory of the host.
-	return getPhysicalMemoryLimit()
 }
 
 // getPhysicalMemoryLimit returns the total physical memory of the host in bytes
-// by reading the "/proc/meminfo" file.
-func getPhysicalMemoryLimit() int64 {
+// by reading the "/proc/meminfo" file and handling potential errors.
+func getPhysicalMemoryLimit() (int64, error) {
 	const procMeminfo = "/proc/meminfo"
 	file, err := os.Open(procMeminfo)
 	if err != nil {
-		log.Printf("Error opening %s: %v", procMeminfo, err)
-		return 0
+		return 0, fmt.Errorf("Error opening %s: %v", procMeminfo, err)
 	}
 
 	defer func(file multipart.File) {
@@ -78,17 +74,17 @@ func getPhysicalMemoryLimit() int64 {
 			if len(fields) >= 2 {
 				memKB, err := strconv.ParseInt(fields[1], 10, 64)
 				if err == nil {
-					return memKB * 1024
+					return memKB * 1024, nil
 				}
-				log.Printf("Error parsing memory value %q: %v", fields[1], err)
-				return 0
+				log.Printf("Error parsing memory value %q: %v", fields[1],
+					err)
 			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Printf("Error scanning %s: %v", procMeminfo, err)
+		return 0, fmt.Errorf("Error scanning %s: %v", procMeminfo, err)
 	}
 
-	return 0
+	return 0, nil
 }

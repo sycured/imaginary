@@ -1,6 +1,3 @@
-//go:build darwin
-// +build darwin
-
 /*
  * SPDX-License-Identifier: AGPL-3.0-only
  *
@@ -22,21 +19,20 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"math"
 
 	"golang.org/x/sys/unix"
 )
 
-// getMemoryLimit returns the total physical memory of the host.
-func getMemoryLimit() int64 {
+// getMemoryLimit returns the total physical memory of the host and an error if it fails.
+func getMemoryLimit() (int64, error) {
 	mem, err := unix.SysctlUint64("hw.memsize")
 	if err != nil {
-		log.Printf("Error retrieving memory using sysctl: %v", err)
-		return 0
+		return 0, fmt.Errorf("error retrieving memory using sysctl: %w", err)
 	}
 	if mem > math.MaxInt64 {
-		return math.MaxInt64
+		return 0, fmt.Errorf("memory size exceeds the maximum integer value: reduced at MaxInt64")
 	}
-	return int64(mem)
+	return int64(mem), nil
 }
