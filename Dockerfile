@@ -24,6 +24,7 @@ COPY . .
 
 # Compile imaginary
 RUN go build -a \
+    -buildmode=pie \
     -o ${GOPATH}/bin/imaginary \
     -ldflags="-s -w -h -X main.Version=${IMAGINARY_VERSION}" \
     -trimpath \
