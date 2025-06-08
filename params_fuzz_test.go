@@ -20,6 +20,7 @@ package main
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -41,9 +42,10 @@ func FuzzBuildParamsFromQuery(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, queryString string) {
 		queryValues, err := url.ParseQuery(queryString)
-		t.Logf("Input: %s, err: %v", queryString, err)
-
 		imageOptions, err2 := buildParamsFromQuery(queryValues)
+		if err != nil && !strings.Contains(err.Error(), "invalid URL escape") && !strings.Contains(err.Error(), "invalid semicolon separator in query") {
+			t.Errorf("Input: %#v ; Output: %v ; Error: %#v", queryValues, imageOptions, err.Error())
+		}
 		t.Logf("Input: %s, ImageOptions: %v, err: %v", queryString, imageOptions, err2)
 	})
 }
