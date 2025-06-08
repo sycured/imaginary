@@ -34,7 +34,7 @@ func FuzzGetUnikernelMemory(f *testing.F) {
 	f.Add("5T")
 	f.Add("20 TB")
 	f.Fuzz(func(t *testing.T, value string) {
-		os.Setenv("UNIKERNEL_MEMORY", value)
+		_ = os.Setenv("UNIKERNEL_MEMORY", value)
 		result, err := getUnikernelMemory()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "FAIL") {

@@ -45,7 +45,7 @@ func TestGetUnikernelMemory(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		os.Setenv("UNIKERNEL_MEMORY", test.value)
+		_ = os.Setenv("UNIKERNEL_MEMORY", test.value)
 		val, err := getUnikernelMemory()
 		if val != int64(test.expected) {
 			t.Errorf(InvalidParam, val, test.expected, err)
