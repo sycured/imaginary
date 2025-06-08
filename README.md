@@ -24,6 +24,9 @@ To get started, take a look the [installation](#installation) steps, [usage](#co
 ## Contents
 
 - [Contributing](#contributing)
+- [Official container images](#official-container-images)
+  - [Provenance](#provenance)
+  - [SBOM](#sbom)
 - [Supported image operations](#supported-image-operations)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -61,6 +64,20 @@ A quick guideline to get started:
 - Avoid duplications
 - Write tests
 - Write documentation
+
+## Official container images
+
+They're hosted on Docker Hub: https://hub.docker.com/r/sycured/imaginary
+
+### Provenance
+```bash
+docker buildx imagetools inspect sycured/imaginary:main --format "{{ json .Provenance }}"
+```
+
+### SBOM
+```bash
+docker buildx imagetools inspect sycured/imaginary:main --format "{{ json .SBOM }}"
+```
 
 ## Supported image operations
 
