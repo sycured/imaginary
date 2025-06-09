@@ -4,9 +4,8 @@ ENV GOPATH=/go
 
 ARG IMAGINARY_VERSION=dev
 
-# Installs libvips + required libraries
 RUN apk upgrade --no-cache --no-interactive \
-    && apk add --no-cache --no-interactive ca-certificates libvips-dev
+    && apk add --no-cache --no-interactive ca-certificates jemalloc libvips-dev posix-libc-utils
 
 WORKDIR ${GOPATH}/src/github.com/sycured/imaginary
 
@@ -30,8 +29,17 @@ RUN go build -a \
     -trimpath \
     github.com/sycured/imaginary
 
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:9998e2e0b1cb3cb467817a03cbe4c02f37a5a6bab90640f6e1a69a24b046f17a
+RUN ldd /go/bin/imaginary | tr -s '[:blank:]' '\n' | grep '^/' | \
+    xargs -I {} bash -c 'mkdir -p $(dirname deps/{}); cp {} deps/{};' \
+    && rm -rf /go/src/github.com/sycured/imaginary/deps/lib64 \
+    && rm /go/src/github.com/sycured/imaginary/deps/lib/libc.so.* \
+    && rm /go/src/github.com/sycured/imaginary/deps/lib/libm.so.* \
+    && rm /go/src/github.com/sycured/imaginary/deps/usr/lib/libgcc_s.so.* \
+    && rm /go/src/github.com/sycured/imaginary/deps/usr/lib/libstdc++.so.*
+
+FROM cgr.dev/chainguard/glibc-dynamic:latest@sha256:85c140c4707b9e50d9e79287f11f43913f45afc260adddfa5a3e33fc0fb22aad
 
 ARG IMAGINARY_VERSION
 
@@ -42,21 +50,16 @@ LABEL maintainer="60801403+sycured@users.noreply.github.com" \
       org.label-schema.vcs-url="https://github.com/sycured/imaginary" \
       org.label-schema.version="${IMAGINARY_VERSION}"
 
-COPY --from=builder --chown=root:root --chmod=755 /go/bin/imaginary /usr/local/bin/imaginary
+COPY --from=builder --chmod=755 /go/bin/imaginary /usr/local/bin/
+COPY --from=builder /go/src/github.com/sycured/imaginary/deps /
 
-# Install runtime dependencies
-RUN apk upgrade --no-cache --no-interactive \
-    && apk add --no-cache --no-interactive ca-certificates jemalloc libvips \
-    && ln -s /usr/lib/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
-    && rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
-
-ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 # Server port to listen
 ENV PORT=9000
 
 # Drop privileges for non-UID mapped environments
-USER nobody
+USER nonroot
 
 # Run the entrypoint command by default when the container starts.
 ENTRYPOINT ["/usr/local/bin/imaginary"]
