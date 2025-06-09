@@ -23,7 +23,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             9236a389bd48b984df91adc1bc924620.r2.cloudflarestorage.com:443
-            apt.cgr.dev:443
+            apk.cgr.dev:443
             auth.docker.io:443
             cgr.dev:443
             deb.debian.org:80
